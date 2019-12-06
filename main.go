@@ -1,7 +1,9 @@
 package main
 
-import "fmt"
+import (
+	"github.com/imtanmoy/authy/cmd"
+)
 
 func main() {
-	fmt.Println("authy")
+	cmd.Execute()
 }

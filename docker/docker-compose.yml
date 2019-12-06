@@ -1,0 +1,16 @@
+version: '3.7'
+
+
+services:
+  db:
+    image: postgres:10.1
+    container_name: db
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=authy
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - ./authy.sql:/docker-entrypoint-initdb.d/authy.sql
+    ports:
+      - 5432:5432
