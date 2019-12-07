@@ -9,4 +9,5 @@ require (
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/viper v1.6.1
 	go.uber.org/zap v1.13.0
+	gopkg.in/thedevsaddam/govalidator.v1 v1.9.9
 )

@@ -19,7 +19,7 @@ type Server struct {
 // NewServer creates and configures an APIServer serving all application routes.
 func NewServer() (*Server, error) {
 	logger.Info("configuring server...")
-	api, err := New()
+	handler, err := New()
 	if err != nil {
 		return nil, err
 	}
@@ -30,7 +30,7 @@ func NewServer() (*Server, error) {
 
 	srv := http.Server{
 		Addr:    addr,
-		Handler: api,
+		Handler: handler,
 	}
 
 	return &Server{&srv}, nil
