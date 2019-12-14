@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi"
-	"github.com/go-chi/chi/middleware"
+	_chiMiddleware "github.com/go-chi/chi/middleware"
 	"github.com/go-chi/render"
 )
 
@@ -17,11 +17,11 @@ import (
 func New() (*chi.Mux, error) {
 
 	r := chi.NewRouter()
-	r.Use(middleware.Recoverer)
-	r.Use(middleware.RequestID)
-	r.Use(middleware.RealIP)
-	r.Use(middleware.DefaultCompress)
-	r.Use(middleware.Timeout(15 * time.Second))
+	r.Use(_chiMiddleware.Recoverer)
+	r.Use(_chiMiddleware.RequestID)
+	r.Use(_chiMiddleware.RealIP)
+	r.Use(_chiMiddleware.DefaultCompress)
+	r.Use(_chiMiddleware.Timeout(15 * time.Second))
 
 	//r.Use(logging.NewStructuredLogger(logger))
 	r.Use(render.SetContentType(render.ContentTypeJSON))
