@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+option go_package = "github.com/imtanmoy/authy/organization";
+
+package organization;
+
+message Organization {
+    int32 id = 1;
+    string Name = 2;
+}
+
+
+service OrganizationService {
+    rpc CreateOrganization (Organization) returns (Organization);
+}
