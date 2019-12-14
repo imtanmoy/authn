@@ -9,7 +9,6 @@ export GO111MODULE=on
 
 PROJECT_NAME = authy
 
-BUILD_DIR = build
 BIN_DIR = bin
 BIN_FILE = $(PROJECT_NAME)
 
@@ -38,13 +37,12 @@ dep:
 	@echo "Finish..."
 
 build: dep
-	@echo "Compiling $(BUILD_DIR)/$(BIN_FILE)..."
-	@go build $(LDFLAGS) -i -o $(BUILD_DIR)/$(BIN_FILE) $(SRC_DIR)/main.go
+	@echo "Compiling $(BIN_DIR)/$(BIN_FILE)..."
+	@go build $(LDFLAGS) -i -o $(BIN_DIR)/$(BIN_FILE) $(SRC_DIR)/main.go
 	@echo "Finish..."
 
 rm:
 	@rm -rf $(BIN_DIR)/$(BIN_FILE)
-	@rm -rf $(BUILD_DIR)
 	@rm -rf pkg/
 	@rm -rf bin/
 	@rm -rf templates/
@@ -61,7 +59,7 @@ uninstall:
 # 	@rm -f /etc/microservice-email.yml
 
 run: rm build
-	$(BUILD_DIR)/$(BIN_FILE) serve
+	$(BIN_DIR)/$(BIN_FILE) serve
 
 # -------------------------------------------------------------------
 # -								Docker								-
