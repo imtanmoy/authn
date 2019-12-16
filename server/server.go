@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -29,13 +28,9 @@ func NewServer() (*Server, error) {
 	port := strconv.Itoa(config.Conf.SERVER.PORT)
 	addr := host + ":" + port
 
-	nextRequestID := func() string {
-		return fmt.Sprintf("%d", time.Now().UnixNano())
-	}
-
 	srv := http.Server{
 		Addr:         addr,
-		Handler:      (middlewares{tracing(nextRequestID), logging()}).apply(handler),
+		Handler:      handler,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  15 * time.Second,

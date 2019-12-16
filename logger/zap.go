@@ -44,6 +44,18 @@ type zapLogger struct {
 	sugaredLogger *zap.SugaredLogger
 }
 
+func (l *zapLogger) Print(args ...interface{}) {
+	l.sugaredLogger.Info(args...)
+}
+
+func (l *zapLogger) Printf(format string, args ...interface{}) {
+	l.sugaredLogger.Infof(format, args...)
+}
+
+func (l *zapLogger) Println(args ...interface{}) {
+	l.sugaredLogger.Info(args...)
+}
+
 func (l *zapLogger) Debugf(format string, args ...interface{}) {
 	l.sugaredLogger.Debugf(format, args...)
 }

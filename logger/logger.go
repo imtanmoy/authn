@@ -26,6 +26,10 @@ type Logger interface {
 	Panicf(format string, args ...interface{})
 	Panic(args ...interface{})
 
+	Print(args ...interface{})
+	Printf(format string, args ...interface{})
+	Println(args ...interface{})
+
 	WithFields(keyValues Fields) Logger
 }
 

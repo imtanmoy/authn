@@ -5,7 +5,6 @@ import (
 	_orgDeliveryHttp "github.com/imtanmoy/authy/organization/delivery/http"
 	_orgRepo "github.com/imtanmoy/authy/organization/repository"
 	_orgUseCase "github.com/imtanmoy/authy/organization/usecase"
-	"net/http"
 	"time"
 
 	"github.com/go-chi/chi"
@@ -22,15 +21,10 @@ func New() (*chi.Mux, error) {
 	r.Use(_chiMiddleware.RealIP)
 	r.Use(_chiMiddleware.DefaultCompress)
 	r.Use(_chiMiddleware.Timeout(15 * time.Second))
-
-	//r.Use(logging.NewStructuredLogger(logger))
+	r.Use(_chiMiddleware.Logger)
+	r.Use(_chiMiddleware.AllowContentType("application/json"))
+	r.Use(_chiMiddleware.Heartbeat("/heartbeat"))
 	r.Use(render.SetContentType(render.ContentTypeJSON))
-
-	//r.Use(corsConfig().Handler)
-
-	r.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
-		_, _ = w.Write([]byte("pong"))
-	})
 
 	timeoutContext := 30 * time.Millisecond * time.Second //TODO it will come from config
 

@@ -65,8 +65,7 @@ func (oh *OrganizationHandler) OrganizationCtx(next http.Handler) http.Handler {
 func (oh *OrganizationHandler) List(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	if ctx == nil {
-		_ = render.Render(w, r, httputil.NewAPIError(500, "Something went wrong"))
-		return
+		ctx = context.Background()
 	}
 	organizations, err := oh.useCase.FindAll(ctx)
 	if err != nil {
@@ -83,8 +82,7 @@ func (oh *OrganizationHandler) List(w http.ResponseWriter, r *http.Request) {
 func (oh *OrganizationHandler) Create(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	if ctx == nil {
-		_ = render.Render(w, r, httputil.NewAPIError(500, "Something went wrong"))
-		return
+		ctx = context.Background()
 	}
 	data := &OrganizationPayload{}
 	if err := render.Bind(r, data); err != nil {
@@ -115,10 +113,6 @@ func (oh *OrganizationHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 func (oh *OrganizationHandler) Get(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	if ctx == nil {
-		_ = render.Render(w, r, httputil.NewAPIError(500, "Something went wrong"))
-		return
-	}
 	org, ok := ctx.Value(orgKey).(*entities.Organization)
 	if !ok {
 		_ = render.Render(w, r, httputil.NewAPIError(500, "Something went wrong"))
@@ -132,10 +126,6 @@ func (oh *OrganizationHandler) Get(w http.ResponseWriter, r *http.Request) {
 
 func (oh *OrganizationHandler) Update(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	if ctx == nil {
-		_ = render.Render(w, r, httputil.NewAPIError(500, "Something went wrong"))
-		return
-	}
 	org, ok := ctx.Value(orgKey).(*entities.Organization)
 	if !ok {
 		_ = render.Render(w, r, httputil.NewAPIError(500, "Something went wrong"))
@@ -149,10 +139,6 @@ func (oh *OrganizationHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 func (oh *OrganizationHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	if ctx == nil {
-		_ = render.Render(w, r, httputil.NewAPIError(500, "Something went wrong"))
-		return
-	}
 	org, ok := ctx.Value(orgKey).(*entities.Organization)
 	if !ok {
 		_ = render.Render(w, r, httputil.NewAPIError(500, "Something went wrong"))
