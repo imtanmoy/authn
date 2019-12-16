@@ -44,8 +44,8 @@ func NewServer() (*Server, error) {
 	return &Server{&srv}, nil
 }
 
-// Start runs ListenAndServe on the http.Server with graceful shutdown.
-func (srv *Server) Start(ctx context.Context) (err error) {
+// Run runs ListenAndServe on the http.Server with graceful shutdown.
+func (srv *Server) Run(ctx context.Context) (err error) {
 	logger.Info("starting server...")
 	go func() {
 		if err := srv.ListenAndServe(); err != http.ErrServerClosed {

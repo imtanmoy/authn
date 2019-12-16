@@ -45,7 +45,7 @@ var serveCmd = &cobra.Command{
 			cancel()
 		}()
 
-		if err := server.Start(ctx); err != nil {
+		if err := server.Run(ctx); err != nil {
 			logger.Infof("failed to serve:+%v\n", err)
 		}
 		close(c)

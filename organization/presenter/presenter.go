@@ -1,8 +1,8 @@
-package http
+package presenter
 
 import (
 	"github.com/go-chi/render"
-	"github.com/imtanmoy/authy/models"
+	"github.com/imtanmoy/authy/entities"
 	"net/http"
 )
 
@@ -15,7 +15,7 @@ func (o *OrganizationResponse) Render(w http.ResponseWriter, r *http.Request) er
 	return nil
 }
 
-func NewOrganizationResponse(organization *models.Organization) *OrganizationResponse {
+func NewOrganizationResponse(organization *entities.Organization) *OrganizationResponse {
 	resp := &OrganizationResponse{
 		ID:   organization.ID,
 		Name: organization.Name,
@@ -23,8 +23,11 @@ func NewOrganizationResponse(organization *models.Organization) *OrganizationRes
 	return resp
 }
 
-func NewOrganizationListResponse(organizations []*models.Organization) []render.Renderer {
+func NewOrganizationListResponse(organizations []*entities.Organization) []render.Renderer {
 	var list []render.Renderer
+	if len(organizations) == 0 {
+		list = make([]render.Renderer, 0)
+	}
 	for _, organization := range organizations {
 		list = append(list, NewOrganizationResponse(organization))
 	}

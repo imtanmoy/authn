@@ -2,32 +2,32 @@ package usecase
 
 import (
 	"context"
-	"github.com/imtanmoy/authy/models"
+	"github.com/imtanmoy/authy/entities"
 	"github.com/imtanmoy/authy/organization"
 	"time"
 )
 
-type usecase struct {
+type useCase struct {
 	orgRepo        organization.Repository
 	contextTimeout time.Duration
 }
 
-var _ organization.UseCase = (*usecase)(nil)
+var _ organization.UseCase = (*useCase)(nil)
 
-// NewUsecase will create new an usecase object representation of organization.Usecase interface
-func NewUsecase(g organization.Repository, timeout time.Duration) organization.UseCase {
-	return &usecase{
+// NewUseCase will create new an usecase object representation of organization.Usecase interface
+func NewUseCase(g organization.Repository, timeout time.Duration) organization.UseCase {
+	return &useCase{
 		orgRepo:        g,
 		contextTimeout: timeout,
 	}
 }
 
-func (u usecase) FindAll(ctx context.Context) ([]*models.Organization, error) {
+func (u *useCase) FindAll(ctx context.Context) ([]*entities.Organization, error) {
 	return u.orgRepo.FindAll(ctx)
 }
 
-func (u usecase) Store(ctx context.Context, org *models.Organization) error {
-	org1, err := u.orgRepo.Store(ctx, org)
+func (u *useCase) Store(ctx context.Context, org *entities.Organization) error {
+	org1, err := u.orgRepo.Save(ctx, org)
 	if err != nil {
 		return err
 	}
@@ -35,18 +35,18 @@ func (u usecase) Store(ctx context.Context, org *models.Organization) error {
 	return nil
 }
 
-func (u usecase) GetById(ctx context.Context, id int32) (*models.Organization, error) {
-	panic("implement me")
+func (u *useCase) GetById(ctx context.Context, id int32) (*entities.Organization, error) {
+	return u.orgRepo.Find(ctx, id)
 }
 
-func (u usecase) Update(ctx context.Context, org *models.Organization) error {
-	panic("implement me")
+func (u *useCase) Update(ctx context.Context, org *entities.Organization) error {
+	return u.orgRepo.Update(ctx, org)
 }
 
-func (u usecase) Delete(ctx context.Context, org *models.Organization) error {
-	panic("implement me")
+func (u *useCase) Delete(ctx context.Context, org *entities.Organization) error {
+	return u.orgRepo.Delete(ctx, org)
 }
 
-func (u usecase) Exists(ctx context.Context, Id int32) bool {
-	panic("implement me")
+func (u *useCase) Exists(ctx context.Context, id int32) bool {
+	return u.orgRepo.Exists(ctx, id)
 }

@@ -8,6 +8,7 @@ require (
 	github.com/go-pg/pg/v9 v9.0.4
 	github.com/go-pg/urlstruct v0.2.9 // indirect
 	github.com/golang/protobuf v1.3.2
+	github.com/oceanicdev/chi-param v1.1.0
 	github.com/pelletier/go-toml v1.6.0 // indirect
 	github.com/spf13/afero v1.2.2 // indirect
 	github.com/spf13/cobra v0.0.5

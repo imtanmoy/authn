@@ -1,12 +1,21 @@
 package http
 
 import (
+	"context"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
-	"github.com/imtanmoy/authy/models"
+	"github.com/imtanmoy/authy/entities"
 	"github.com/imtanmoy/authy/organization"
+	"github.com/imtanmoy/authy/organization/presenter"
 	"github.com/imtanmoy/authy/utils/httputil"
+	param "github.com/oceanicdev/chi-param"
 	"net/http"
+)
+
+type contextKey string
+
+const (
+	orgKey contextKey = "organization"
 )
 
 // OrganizationHandler  represent the http handler for organization
@@ -20,12 +29,40 @@ func NewHandler(r *chi.Mux, useCase organization.UseCase) {
 		useCase: useCase,
 	}
 	r.Route("/organizations", func(r chi.Router) {
-		r.Get("/", handler.FindAll)
+		r.Get("/", handler.List)
 		r.Post("/", handler.Create)
+		r.Group(func(r chi.Router) {
+			r.Use(handler.OrganizationCtx)
+			r.Get("/{id}", handler.Get)
+			r.Put("/{id}", handler.Update)
+			r.Delete("/{id}", handler.Delete)
+		})
 	})
 }
 
-func (oh *OrganizationHandler) FindAll(w http.ResponseWriter, r *http.Request) {
+func (oh *OrganizationHandler) OrganizationCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		if ctx == nil {
+			_ = render.Render(w, r, httputil.NewAPIError(500, "Something went wrong"))
+			return
+		}
+		id, err := param.Int32(r, "id")
+		if err != nil {
+			_ = render.Render(w, r, httputil.NewAPIError(400, "Invalid request parameter", err))
+			return
+		}
+		org, err := oh.useCase.GetById(ctx, id)
+		if err != nil {
+			_ = render.Render(w, r, httputil.NewAPIError(404, "organization not found", err))
+			return
+		}
+		ctx = context.WithValue(r.Context(), orgKey, org)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+func (oh *OrganizationHandler) List(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	if ctx == nil {
 		_ = render.Render(w, r, httputil.NewAPIError(500, "Something went wrong"))
@@ -37,7 +74,7 @@ func (oh *OrganizationHandler) FindAll(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := render.RenderList(w, r, NewOrganizationListResponse(organizations)); err != nil {
+	if err := render.RenderList(w, r, presenter.NewOrganizationListResponse(organizations)); err != nil {
 		_ = render.Render(w, r, httputil.NewAPIError(err))
 		return
 	}
@@ -62,7 +99,7 @@ func (oh *OrganizationHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var org models.Organization
+	var org entities.Organization
 	org.Name = data.Name
 
 	err := oh.useCase.Store(ctx, &org)
@@ -72,6 +109,57 @@ func (oh *OrganizationHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	render.Status(r, http.StatusCreated)
-	_ = render.Render(w, r, NewOrganizationResponse(&org))
+	_ = render.Render(w, r, presenter.NewOrganizationResponse(&org))
 	return
+}
+
+func (oh *OrganizationHandler) Get(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	if ctx == nil {
+		_ = render.Render(w, r, httputil.NewAPIError(500, "Something went wrong"))
+		return
+	}
+	org, ok := ctx.Value(orgKey).(*entities.Organization)
+	if !ok {
+		_ = render.Render(w, r, httputil.NewAPIError(500, "Something went wrong"))
+		return
+	}
+	if err := render.Render(w, r, presenter.NewOrganizationResponse(org)); err != nil {
+		_ = render.Render(w, r, httputil.NewAPIError(err))
+		return
+	}
+}
+
+func (oh *OrganizationHandler) Update(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	if ctx == nil {
+		_ = render.Render(w, r, httputil.NewAPIError(500, "Something went wrong"))
+		return
+	}
+	org, ok := ctx.Value(orgKey).(*entities.Organization)
+	if !ok {
+		_ = render.Render(w, r, httputil.NewAPIError(500, "Something went wrong"))
+		return
+	}
+	if err := render.Render(w, r, presenter.NewOrganizationResponse(org)); err != nil {
+		_ = render.Render(w, r, httputil.NewAPIError(err))
+		return
+	}
+}
+
+func (oh *OrganizationHandler) Delete(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	if ctx == nil {
+		_ = render.Render(w, r, httputil.NewAPIError(500, "Something went wrong"))
+		return
+	}
+	org, ok := ctx.Value(orgKey).(*entities.Organization)
+	if !ok {
+		_ = render.Render(w, r, httputil.NewAPIError(500, "Something went wrong"))
+		return
+	}
+	if err := render.Render(w, r, presenter.NewOrganizationResponse(org)); err != nil {
+		_ = render.Render(w, r, httputil.NewAPIError(err))
+		return
+	}
 }

@@ -36,7 +36,7 @@ func New() (*chi.Mux, error) {
 
 	orgRepo := _orgRepo.NewRepository(db.DB)
 
-	orgUseCase := _orgUseCase.NewUsecase(orgRepo, timeoutContext)
+	orgUseCase := _orgUseCase.NewUseCase(orgRepo, timeoutContext)
 
 	_orgDeliveryHttp.NewHandler(r, orgUseCase)
 

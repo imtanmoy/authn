@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"fmt"
 	"github.com/imtanmoy/authy/logger"
 	"net/http"
 )
@@ -28,7 +27,6 @@ func logging() func(http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			defer func() {
 				requestID, ok := r.Context().Value(requestIDKey).(string)
-				fmt.Println(requestID)
 				if !ok {
 					requestID = "unknown"
 				}
