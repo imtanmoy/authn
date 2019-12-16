@@ -131,6 +131,25 @@ func (oh *OrganizationHandler) Update(w http.ResponseWriter, r *http.Request) {
 		_ = render.Render(w, r, httputil.NewAPIError(500, "Something went wrong"))
 		return
 	}
+	data := &OrganizationPayload{}
+	if err := render.Bind(r, data); err != nil {
+		_ = render.Render(w, r, httputil.NewAPIError(err))
+		return
+	}
+
+	validationErrors := data.validate()
+
+	if len(validationErrors) > 0 {
+		_ = render.Render(w, r, httputil.NewAPIError(400, "Invalid Request", validationErrors))
+		return
+	}
+	// update organization's data
+	org.Name = data.Name
+	err := oh.useCase.Update(ctx, org)
+	if err != nil {
+		_ = render.Render(w, r, httputil.NewAPIError(err))
+		return
+	}
 	if err := render.Render(w, r, presenter.NewOrganizationResponse(org)); err != nil {
 		_ = render.Render(w, r, httputil.NewAPIError(err))
 		return
@@ -144,8 +163,10 @@ func (oh *OrganizationHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		_ = render.Render(w, r, httputil.NewAPIError(500, "Something went wrong"))
 		return
 	}
-	if err := render.Render(w, r, presenter.NewOrganizationResponse(org)); err != nil {
+	err := oh.useCase.Delete(ctx, org)
+	if err != nil {
 		_ = render.Render(w, r, httputil.NewAPIError(err))
 		return
 	}
+	render.NoContent(w, r)
 }
