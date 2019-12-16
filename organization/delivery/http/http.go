@@ -9,7 +9,9 @@ import (
 	"github.com/imtanmoy/authy/organization/presenter"
 	"github.com/imtanmoy/authy/utils/httputil"
 	param "github.com/oceanicdev/chi-param"
+	"gopkg.in/thedevsaddam/govalidator.v1"
 	"net/http"
+	"net/url"
 )
 
 type contextKey string
@@ -17,6 +19,24 @@ type contextKey string
 const (
 	orgKey contextKey = "organization"
 )
+
+type OrganizationPayload struct {
+	Name string `json:"name"`
+}
+
+func (o *OrganizationPayload) validate() url.Values {
+	rules := govalidator.MapData{
+		"name": []string{"required", "min:4", "max:20"},
+	}
+	opts := govalidator.Options{
+		Data:  o,
+		Rules: rules,
+	}
+
+	v := govalidator.New(opts)
+	e := v.ValidateStruct()
+	return e
+}
 
 // OrganizationHandler  represent the http handler for organization
 type OrganizationHandler struct {
@@ -85,7 +105,7 @@ func (oh *OrganizationHandler) Create(w http.ResponseWriter, r *http.Request) {
 		ctx = context.Background()
 	}
 	data := &OrganizationPayload{}
-	if err := render.Bind(r, data); err != nil {
+	if err := render.DecodeJSON(r.Body, data); err != nil {
 		_ = render.Render(w, r, httputil.NewAPIError(err))
 		return
 	}
@@ -132,7 +152,7 @@ func (oh *OrganizationHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data := &OrganizationPayload{}
-	if err := render.Bind(r, data); err != nil {
+	if err := render.DecodeJSON(r.Body, data); err != nil {
 		_ = render.Render(w, r, httputil.NewAPIError(err))
 		return
 	}
