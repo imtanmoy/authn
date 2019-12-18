@@ -2,21 +2,15 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/spf13/cobra"
 
 	"github.com/imtanmoy/authy/config"
-	"github.com/imtanmoy/authy/logger"
 )
 
 func init() {
 	cobra.OnInitialize(config.InitConfig)
-	err := logger.InitLogger()
-	if err != nil {
-		log.Fatal(err)
-	}
 }
 
 var rootCmd = &cobra.Command{

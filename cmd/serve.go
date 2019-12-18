@@ -8,10 +8,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-
 	"github.com/imtanmoy/authy/db"
-	"github.com/imtanmoy/authy/logger"
 	"github.com/imtanmoy/authy/server"
+	"github.com/imtanmoy/logx"
 )
 
 func init() {
@@ -25,14 +24,14 @@ var serveCmd = &cobra.Command{
 		// initializing database
 		err := db.InitDB()
 		if err != nil {
-			logger.Fatalf("%s : %s", "Database Could not be initiated", err)
+			logx.Fatalf("%s : %s", "Database Could not be initiated", err)
 		}
-		logger.Info("Database Initiated...")
+		logx.Info("Database Initiated...")
 
 		// initializing server
 		server, err := server.NewServer()
 		if err != nil {
-			logger.Fatalf("%s : %s", "Server could not be started", err)
+			logx.Fatalf("%s : %s", "Server could not be started", err)
 		}
 		c := make(chan os.Signal, 1)
 		signal.Notify(c, os.Interrupt, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGSTOP)
@@ -41,12 +40,12 @@ var serveCmd = &cobra.Command{
 
 		go func() {
 			oscall := <-c
-			logger.Infof("system call:%+v", oscall)
+			logx.Infof("system call:%+v", oscall)
 			cancel()
 		}()
 
 		if err := server.Run(ctx); err != nil {
-			logger.Infof("failed to serve:+%v\n", err)
+			logx.Infof("failed to serve:+%v\n", err)
 		}
 		close(c)
 	},

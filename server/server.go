@@ -8,7 +8,7 @@ import (
 
 	"github.com/imtanmoy/authy/config"
 	"github.com/imtanmoy/authy/db"
-	"github.com/imtanmoy/authy/logger"
+	"github.com/imtanmoy/logx"
 )
 
 // Server provides an http.Server.
@@ -18,7 +18,7 @@ type Server struct {
 
 // NewServer creates and configures an APIServer serving all application routes.
 func NewServer() (*Server, error) {
-	logger.Info("configuring server...")
+	logx.Info("configuring server...")
 	handler, err := New()
 	if err != nil {
 		return nil, err
@@ -41,13 +41,13 @@ func NewServer() (*Server, error) {
 
 // Run runs ListenAndServe on the http.Server with graceful shutdown.
 func (srv *Server) Run(ctx context.Context) (err error) {
-	logger.Info("starting server...")
+	logx.Info("starting server...")
 	go func() {
 		if err := srv.ListenAndServe(); err != http.ErrServerClosed {
-			logger.Fatalf("listen:%+s\n", err)
+			logx.Fatalf("listen:%+s\n", err)
 		}
 	}()
-	logger.Infof("Listening on %s\n", srv.Addr)
+	logx.Infof("Listening on %s\n", srv.Addr)
 
 	<-ctx.Done()
 
@@ -57,16 +57,16 @@ func (srv *Server) Run(ctx context.Context) (err error) {
 	}()
 	srv.SetKeepAlivesEnabled(false)
 	if err = srv.Shutdown(ctxShutDown); err != nil {
-		logger.Fatalf("server Shutdown Failed:%+s", err)
+		logx.Fatalf("server Shutdown Failed:%+s", err)
 	}
-	logger.Info("server exited properly")
+	logx.Info("server exited properly")
 
 	if err == http.ErrServerClosed {
 		err = nil
 	}
 	dbErr := db.Shutdown()
 	if dbErr != nil {
-		logger.Errorf("%s : %s", "Database shutdown failed", dbErr)
+		logx.Errorf("%s : %s", "Database shutdown failed", dbErr)
 	}
 	return
 }
