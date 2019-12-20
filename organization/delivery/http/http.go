@@ -2,12 +2,12 @@ package http
 
 import (
 	"context"
+	"errors"
 	"github.com/go-chi/chi"
-	"github.com/go-chi/render"
 	"github.com/imtanmoy/authy/entities"
 	"github.com/imtanmoy/authy/organization"
 	"github.com/imtanmoy/authy/organization/presenter"
-	"github.com/imtanmoy/authy/utils/httputil"
+	"github.com/imtanmoy/httpx"
 	param "github.com/oceanicdev/chi-param"
 	"gopkg.in/thedevsaddam/govalidator.v1"
 	"net/http"
@@ -64,17 +64,17 @@ func (oh *OrganizationHandler) OrganizationCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		if ctx == nil {
-			_ = render.Render(w, r, httputil.NewAPIError(500, "Something went wrong"))
+			httpx.ResponseJSONError(w, r, http.StatusInternalServerError, httpx.ErrInternalServerError)
 			return
 		}
 		id, err := param.Int32(r, "id")
 		if err != nil {
-			_ = render.Render(w, r, httputil.NewAPIError(400, "Invalid request parameter", err))
+			httpx.ResponseJSONError(w, r, http.StatusBadRequest, "Invalid request parameter", err)
 			return
 		}
 		org, err := oh.useCase.GetById(ctx, id)
 		if err != nil {
-			_ = render.Render(w, r, httputil.NewAPIError(404, "organization not found", err))
+			httpx.ResponseJSONError(w, r, http.StatusNotFound, "organization not found", err)
 			return
 		}
 		ctx = context.WithValue(r.Context(), orgKey, org)
@@ -89,14 +89,12 @@ func (oh *OrganizationHandler) List(w http.ResponseWriter, r *http.Request) {
 	}
 	organizations, err := oh.useCase.FindAll(ctx)
 	if err != nil {
-		_ = render.Render(w, r, httputil.NewAPIError(err))
+		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, err)
 		return
 	}
 
-	if err := render.RenderList(w, r, presenter.NewOrganizationListResponse(organizations)); err != nil {
-		_ = render.Render(w, r, httputil.NewAPIError(err))
-		return
-	}
+	httpx.ResponseJSON(w, http.StatusOK, presenter.NewOrganizationListResponse(organizations))
+	return
 }
 
 func (oh *OrganizationHandler) Create(w http.ResponseWriter, r *http.Request) {
@@ -105,15 +103,20 @@ func (oh *OrganizationHandler) Create(w http.ResponseWriter, r *http.Request) {
 		ctx = context.Background()
 	}
 	data := &OrganizationPayload{}
-	if err := render.DecodeJSON(r.Body, data); err != nil {
-		_ = render.Render(w, r, httputil.NewAPIError(err))
+	if err := httpx.DecodeJSON(r, data); err != nil {
+		var mr *httpx.MalformedRequest
+		if errors.As(err, &mr) {
+			httpx.ResponseJSONError(w, r, mr.Status, mr.Status, mr.Msg)
+		} else {
+			httpx.ResponseJSONError(w, r, http.StatusInternalServerError, err)
+		}
 		return
 	}
 
 	validationErrors := data.validate()
 
 	if len(validationErrors) > 0 {
-		_ = render.Render(w, r, httputil.NewAPIError(400, "Invalid Request", validationErrors))
+		httpx.ResponseJSONError(w, r, 400, "Invalid Request", validationErrors)
 		return
 	}
 
@@ -122,12 +125,10 @@ func (oh *OrganizationHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	err := oh.useCase.Store(ctx, &org)
 	if err != nil {
-		_ = render.Render(w, r, httputil.NewAPIError(err))
+		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, err)
 		return
 	}
-
-	render.Status(r, http.StatusCreated)
-	_ = render.Render(w, r, presenter.NewOrganizationResponse(&org))
+	httpx.ResponseJSON(w, http.StatusCreated, presenter.NewOrganizationResponse(&org))
 	return
 }
 
@@ -135,58 +136,54 @@ func (oh *OrganizationHandler) Get(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	org, ok := ctx.Value(orgKey).(*entities.Organization)
 	if !ok {
-		_ = render.Render(w, r, httputil.NewAPIError(500, "Something went wrong"))
+		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, httpx.ErrInternalServerError)
 		return
 	}
-	if err := render.Render(w, r, presenter.NewOrganizationResponse(org)); err != nil {
-		_ = render.Render(w, r, httputil.NewAPIError(err))
-		return
-	}
+	httpx.ResponseJSON(w, http.StatusOK, presenter.NewOrganizationResponse(org))
+	return
 }
 
 func (oh *OrganizationHandler) Update(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	org, ok := ctx.Value(orgKey).(*entities.Organization)
 	if !ok {
-		_ = render.Render(w, r, httputil.NewAPIError(500, "Something went wrong"))
+		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, httpx.ErrInternalServerError)
 		return
 	}
 	data := &OrganizationPayload{}
-	if err := render.DecodeJSON(r.Body, data); err != nil {
-		_ = render.Render(w, r, httputil.NewAPIError(err))
+	if err := httpx.DecodeJSON(r, data); err != nil {
+		httpx.ResponseJSONError(w, r, http.StatusBadRequest, err)
 		return
 	}
 
 	validationErrors := data.validate()
 
 	if len(validationErrors) > 0 {
-		_ = render.Render(w, r, httputil.NewAPIError(400, "Invalid Request", validationErrors))
+		httpx.ResponseJSONError(w, r, http.StatusBadRequest, "Invalid Request", validationErrors)
 		return
 	}
 	// update organization's data
 	org.Name = data.Name
 	err := oh.useCase.Update(ctx, org)
 	if err != nil {
-		_ = render.Render(w, r, httputil.NewAPIError(err))
+		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, err)
 		return
 	}
-	if err := render.Render(w, r, presenter.NewOrganizationResponse(org)); err != nil {
-		_ = render.Render(w, r, httputil.NewAPIError(err))
-		return
-	}
+	httpx.ResponseJSON(w, http.StatusOK, presenter.NewOrganizationResponse(org))
+	return
 }
 
 func (oh *OrganizationHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	org, ok := ctx.Value(orgKey).(*entities.Organization)
 	if !ok {
-		_ = render.Render(w, r, httputil.NewAPIError(500, "Something went wrong"))
+		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, httpx.ErrInternalServerError)
 		return
 	}
 	err := oh.useCase.Delete(ctx, org)
 	if err != nil {
-		_ = render.Render(w, r, httputil.NewAPIError(err))
+		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, err)
 		return
 	}
-	render.NoContent(w, r)
+	httpx.NoContent(w)
 }

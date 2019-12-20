@@ -4,10 +4,10 @@ go 1.13
 
 require (
 	github.com/go-chi/chi v4.0.2+incompatible
-	github.com/go-chi/render v1.0.1
 	github.com/go-pg/pg/v9 v9.1.0
 	github.com/go-pg/urlstruct v0.2.9 // indirect
 	github.com/golang/protobuf v1.3.2
+	github.com/imtanmoy/httpx v0.0.3
 	github.com/imtanmoy/logx v0.0.3
 	github.com/oceanicdev/chi-param v1.1.0
 	github.com/pelletier/go-toml v1.6.0 // indirect

@@ -9,7 +9,6 @@ import (
 
 	"github.com/go-chi/chi"
 	_chiMiddleware "github.com/go-chi/chi/middleware"
-	"github.com/go-chi/render"
 )
 
 // New configures application resources and routes.
@@ -24,7 +23,7 @@ func New() (*chi.Mux, error) {
 	r.Use(_chiMiddleware.Logger)
 	r.Use(_chiMiddleware.AllowContentType("application/json"))
 	r.Use(_chiMiddleware.Heartbeat("/heartbeat"))
-	r.Use(render.SetContentType(render.ContentTypeJSON))
+	//r.Use(render.SetContentType(3)) //render.ContentTypeJSON resolve value 3
 
 	timeoutContext := 30 * time.Millisecond * time.Second //TODO it will come from config
 
