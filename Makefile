@@ -7,7 +7,7 @@ SHELL := /bin/bash
 
 export GO111MODULE=on
 
-PROJECT_NAME = authy
+PROJECT_NAME = authN
 
 BIN_DIR = bin
 BIN_FILE = $(PROJECT_NAME)

@@ -8,9 +8,9 @@ services:
     environment:
       - POSTGRES_USER=admin
       - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=authy
+      - POSTGRES_DB=authN
       - PGDATA=/var/lib/postgresql/data/pgdata
     volumes:
-      - ./authy.sql:/docker-entrypoint-initdb.d/authy.sql
+      - ./authN.sql:/docker-entrypoint-initdb.d/authN.sql
     ports:
       - 5432:5432

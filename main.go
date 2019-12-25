@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/imtanmoy/authy/cmd"
+	"github.com/imtanmoy/authN/cmd"
 )
 
 func main() {

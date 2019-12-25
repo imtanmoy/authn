@@ -1,7 +1,7 @@
 package presenter
 
 import (
-	"github.com/imtanmoy/authy/entities"
+	"github.com/imtanmoy/authN/entities"
 )
 
 type OrganizationResponse struct {

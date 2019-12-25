@@ -2,8 +2,8 @@ package usecase
 
 import (
 	"context"
-	"github.com/imtanmoy/authy/entities"
-	"github.com/imtanmoy/authy/organization"
+	"github.com/imtanmoy/authN/entities"
+	"github.com/imtanmoy/authN/organization"
 	"time"
 )
 

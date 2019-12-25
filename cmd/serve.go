@@ -8,8 +8,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/imtanmoy/authy/db"
-	"github.com/imtanmoy/authy/server"
+	"github.com/imtanmoy/authN/db"
+	"github.com/imtanmoy/authN/server"
 	"github.com/imtanmoy/logx"
 )
 

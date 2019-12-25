@@ -1,10 +1,10 @@
 package server
 
 import (
-	"github.com/imtanmoy/authy/db"
-	_orgDeliveryHttp "github.com/imtanmoy/authy/organization/delivery/http"
-	_orgRepo "github.com/imtanmoy/authy/organization/repository"
-	_orgUseCase "github.com/imtanmoy/authy/organization/usecase"
+	"github.com/imtanmoy/authN/db"
+	_orgDeliveryHttp "github.com/imtanmoy/authN/organization/delivery/http"
+	_orgRepo "github.com/imtanmoy/authN/organization/repository"
+	_orgUseCase "github.com/imtanmoy/authN/organization/usecase"
 	"time"
 
 	"github.com/go-chi/chi"
