@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 	"github.com/go-pg/pg/v9"
-	"github.com/imtanmoy/authN/models"
-	"github.com/imtanmoy/authN/organization"
+	"github.com/imtanmoy/authn/models"
+	"github.com/imtanmoy/authn/organization"
 )
 
 type repository struct {

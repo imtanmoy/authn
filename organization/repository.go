@@ -2,7 +2,7 @@ package organization
 
 import (
 	"context"
-	"github.com/imtanmoy/authN/models"
+	"github.com/imtanmoy/authn/models"
 )
 
 type Repository interface {

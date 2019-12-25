@@ -2,5 +2,5 @@ vendor/*
 .idea/
 
 \.env
-/authN
+/authn
 bin

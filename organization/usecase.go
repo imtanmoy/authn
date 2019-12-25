@@ -2,7 +2,7 @@ package organization
 
 import (
 	"context"
-	"github.com/imtanmoy/authN/models"
+	"github.com/imtanmoy/authn/models"
 )
 
 // UseCase represent the groups's use cases

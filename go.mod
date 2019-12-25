@@ -1,4 +1,4 @@
-module github.com/imtanmoy/authN
+module github.com/imtanmoy/authn
 
 go 1.13
 

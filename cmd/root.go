@@ -6,7 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/imtanmoy/authN/config"
+	"github.com/imtanmoy/authn/config"
 )
 
 func init() {
@@ -15,8 +15,8 @@ func init() {
 
 var rootCmd = &cobra.Command{
 	Use:   "Root",
-	Short: "authN",
-	Long:  "authN service for authentication and identity",
+	Short: "authn",
+	Long:  "authn service for authentication and identity",
 	Run: func(cmd *cobra.Command, args []string) {
 		_ = cmd.Help()
 	},

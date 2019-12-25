@@ -6,7 +6,7 @@ import (
 
 	"github.com/go-pg/pg/v9"
 
-	"github.com/imtanmoy/authN/config"
+	"github.com/imtanmoy/authn/config"
 )
 
 var DB *pg.DB

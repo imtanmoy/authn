@@ -3,7 +3,7 @@ package cmd
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/imtanmoy/authN/db"
+	"github.com/imtanmoy/authn/db"
 	"github.com/imtanmoy/logx"
 )
 

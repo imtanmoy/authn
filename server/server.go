@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/imtanmoy/authN/config"
-	"github.com/imtanmoy/authN/db"
+	"github.com/imtanmoy/authn/config"
+	"github.com/imtanmoy/authn/db"
 	"github.com/imtanmoy/logx"
 )
 

@@ -9,4 +9,4 @@ db:
   port: 5432
   username: admin
   password: password
-  db_name: authN
+  db_name: authn
