@@ -4,7 +4,7 @@ version: '3.7'
 services:
   db:
     image: postgres:10.1
-    container_name: db
+    container_name: authn-db
     environment:
       - POSTGRES_USER=admin
       - POSTGRES_PASSWORD=password
