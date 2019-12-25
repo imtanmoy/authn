@@ -1,4 +1,4 @@
-package entities
+package models
 
 import (
 	"context"
@@ -34,4 +34,28 @@ func (o *Organization) BeforeInsert(ctx context.Context) (context.Context, error
 func (o *Organization) BeforeUpdate(ctx context.Context) (context.Context, error) {
 	o.UpdatedAt = time.Now()
 	return ctx, nil
+}
+
+type OrganizationResponse struct {
+	ID   int32  `json:"id"`
+	Name string `json:"name"`
+}
+
+func NewOrganizationResponse(organization *Organization) *OrganizationResponse {
+	resp := &OrganizationResponse{
+		ID:   organization.ID,
+		Name: organization.Name,
+	}
+	return resp
+}
+
+func NewOrganizationListResponse(organizations []*Organization) []*OrganizationResponse {
+	var list []*OrganizationResponse
+	if len(organizations) == 0 {
+		list = make([]*OrganizationResponse, 0)
+	}
+	for _, organization := range organizations {
+		list = append(list, NewOrganizationResponse(organization))
+	}
+	return list
 }

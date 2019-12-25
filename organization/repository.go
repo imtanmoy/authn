@@ -2,14 +2,14 @@ package organization
 
 import (
 	"context"
-	"github.com/imtanmoy/authN/entities"
+	"github.com/imtanmoy/authN/models"
 )
 
 type Repository interface {
-	FindAll(ctx context.Context) ([]*entities.Organization, error)
-	Save(ctx context.Context, org *entities.Organization) (*entities.Organization, error)
-	Find(ctx context.Context, ID int32) (*entities.Organization, error)
+	FindAll(ctx context.Context) ([]*models.Organization, error)
+	Save(ctx context.Context, org *models.Organization) (*models.Organization, error)
+	Find(ctx context.Context, ID int32) (*models.Organization, error)
 	Exists(ctx context.Context, ID int32) bool
-	Delete(ctx context.Context, org *entities.Organization) error
-	Update(ctx context.Context, org *entities.Organization) error
+	Delete(ctx context.Context, org *models.Organization) error
+	Update(ctx context.Context, org *models.Organization) error
 }

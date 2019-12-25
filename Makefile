@@ -23,7 +23,7 @@ BUILD := $(shell git rev-parse HEAD)
 # Use linker flags to provide version/build settings to the binary
 LDFLAGS=-ldflags "-X=main.Version=$(VERSION) -X=main.Build=$(BUILD)"
 
-DOCKER_COMPOSE_CMD = docker-compose -p $(PROJECT_NAME) -f docker/docker-compose.yml
+DOCKER_COMPOSE_CMD = docker-compose -p $(PROJECT_NAME) -f deployments/development/docker-compose.yml
 
 
 all: dep build

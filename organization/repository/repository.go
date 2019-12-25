@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/go-pg/pg/v9"
-	"github.com/imtanmoy/authN/entities"
+	"github.com/imtanmoy/authN/models"
 	"github.com/imtanmoy/authN/organization"
 )
 
@@ -19,25 +19,25 @@ func NewRepository(db *pg.DB) organization.Repository {
 	return &repository{db}
 }
 
-func (r repository) FindAll(ctx context.Context) ([]*entities.Organization, error) {
+func (r repository) FindAll(ctx context.Context) ([]*models.Organization, error) {
 	db := r.db.WithContext(ctx)
-	var organizations []*entities.Organization
+	var organizations []*models.Organization
 	err := db.Model(&organizations).Select()
 	return organizations, err
 }
 
-func (r repository) Save(ctx context.Context, org *entities.Organization) (*entities.Organization, error) {
+func (r repository) Save(ctx context.Context, org *models.Organization) (*models.Organization, error) {
 	db := r.db.WithContext(ctx)
 	err := db.Insert(org)
 	return org, err
 }
 
-func (r repository) Find(ctx context.Context, id int32) (*entities.Organization, error) {
+func (r repository) Find(ctx context.Context, id int32) (*models.Organization, error) {
 	db := r.db.WithContext(ctx)
 	if !r.Exists(ctx, id) {
 		return nil, errors.New("organization does not exist")
 	}
-	var org entities.Organization
+	var org models.Organization
 	err := db.Model(&org).Where("id = ?", id).Select()
 	return &org, err
 }
@@ -52,13 +52,13 @@ func (r repository) Exists(ctx context.Context, id int32) bool {
 	return num == id
 }
 
-func (r repository) Delete(ctx context.Context, org *entities.Organization) error {
+func (r repository) Delete(ctx context.Context, org *models.Organization) error {
 	db := r.db.WithContext(ctx)
 	err := db.Delete(org)
 	return err
 }
 
-func (r repository) Update(ctx context.Context, org *entities.Organization) error {
+func (r repository) Update(ctx context.Context, org *models.Organization) error {
 	db := r.db.WithContext(ctx)
 	err := db.Update(org)
 	return err

@@ -4,9 +4,8 @@ import (
 	"context"
 	"errors"
 	"github.com/go-chi/chi"
-	"github.com/imtanmoy/authN/entities"
+	"github.com/imtanmoy/authN/models"
 	"github.com/imtanmoy/authN/organization"
-	"github.com/imtanmoy/authN/organization/presenter"
 	"github.com/imtanmoy/httpx"
 	param "github.com/oceanicdev/chi-param"
 	"gopkg.in/thedevsaddam/govalidator.v1"
@@ -93,7 +92,7 @@ func (oh *OrganizationHandler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	httpx.ResponseJSON(w, http.StatusOK, presenter.NewOrganizationListResponse(organizations))
+	httpx.ResponseJSON(w, http.StatusOK, models.NewOrganizationListResponse(organizations))
 	return
 }
 
@@ -120,7 +119,7 @@ func (oh *OrganizationHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var org entities.Organization
+	var org models.Organization
 	org.Name = data.Name
 
 	err := oh.useCase.Store(ctx, &org)
@@ -128,24 +127,24 @@ func (oh *OrganizationHandler) Create(w http.ResponseWriter, r *http.Request) {
 		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, err)
 		return
 	}
-	httpx.ResponseJSON(w, http.StatusCreated, presenter.NewOrganizationResponse(&org))
+	httpx.ResponseJSON(w, http.StatusCreated, models.NewOrganizationResponse(&org))
 	return
 }
 
 func (oh *OrganizationHandler) Get(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	org, ok := ctx.Value(orgKey).(*entities.Organization)
+	org, ok := ctx.Value(orgKey).(*models.Organization)
 	if !ok {
 		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, httpx.ErrInternalServerError)
 		return
 	}
-	httpx.ResponseJSON(w, http.StatusOK, presenter.NewOrganizationResponse(org))
+	httpx.ResponseJSON(w, http.StatusOK, models.NewOrganizationResponse(org))
 	return
 }
 
 func (oh *OrganizationHandler) Update(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	org, ok := ctx.Value(orgKey).(*entities.Organization)
+	org, ok := ctx.Value(orgKey).(*models.Organization)
 	if !ok {
 		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, httpx.ErrInternalServerError)
 		return
@@ -169,13 +168,13 @@ func (oh *OrganizationHandler) Update(w http.ResponseWriter, r *http.Request) {
 		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, err)
 		return
 	}
-	httpx.ResponseJSON(w, http.StatusOK, presenter.NewOrganizationResponse(org))
+	httpx.ResponseJSON(w, http.StatusOK, models.NewOrganizationResponse(org))
 	return
 }
 
 func (oh *OrganizationHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	org, ok := ctx.Value(orgKey).(*entities.Organization)
+	org, ok := ctx.Value(orgKey).(*models.Organization)
 	if !ok {
 		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, httpx.ErrInternalServerError)
 		return
