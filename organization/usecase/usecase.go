@@ -14,7 +14,7 @@ type useCase struct {
 
 var _ organization.UseCase = (*useCase)(nil)
 
-// NewUseCase will create new an usecase object representation of organization.Usecase interface
+// NewUseCase will create new an useCase object representation of organization.UseCase interface
 func NewUseCase(g organization.Repository, timeout time.Duration) organization.UseCase {
 	return &useCase{
 		orgRepo:        g,
@@ -35,7 +35,7 @@ func (u *useCase) Store(ctx context.Context, org *models.Organization) error {
 	return nil
 }
 
-func (u *useCase) GetById(ctx context.Context, id int32) (*models.Organization, error) {
+func (u *useCase) GetById(ctx context.Context, id int) (*models.Organization, error) {
 	return u.orgRepo.Find(ctx, id)
 }
 
@@ -47,6 +47,6 @@ func (u *useCase) Delete(ctx context.Context, org *models.Organization) error {
 	return u.orgRepo.Delete(ctx, org)
 }
 
-func (u *useCase) Exists(ctx context.Context, id int32) bool {
+func (u *useCase) Exists(ctx context.Context, id int) bool {
 	return u.orgRepo.Exists(ctx, id)
 }

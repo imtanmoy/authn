@@ -19,13 +19,13 @@ const (
 	orgKey contextKey = "organization"
 )
 
-type OrganizationPayload struct {
+type organizationPayload struct {
 	Name string `json:"name"`
 }
 
-func (o *OrganizationPayload) validate() url.Values {
+func (o *organizationPayload) validate() url.Values {
 	rules := govalidator.MapData{
-		"name": []string{"required", "min:4", "max:20"},
+		"name": []string{"required", "min:4", "max:100"},
 	}
 	opts := govalidator.Options{
 		Data:  o,
@@ -66,7 +66,7 @@ func (oh *OrganizationHandler) OrganizationCtx(next http.Handler) http.Handler {
 			httpx.ResponseJSONError(w, r, http.StatusInternalServerError, httpx.ErrInternalServerError)
 			return
 		}
-		id, err := param.Int32(r, "id")
+		id, err := param.Int(r, "id")
 		if err != nil {
 			httpx.ResponseJSONError(w, r, http.StatusBadRequest, "Invalid request parameter", err)
 			return
@@ -101,7 +101,7 @@ func (oh *OrganizationHandler) Create(w http.ResponseWriter, r *http.Request) {
 	if ctx == nil {
 		ctx = context.Background()
 	}
-	data := &OrganizationPayload{}
+	data := &organizationPayload{}
 	if err := httpx.DecodeJSON(r, data); err != nil {
 		var mr *httpx.MalformedRequest
 		if errors.As(err, &mr) {
@@ -149,7 +149,7 @@ func (oh *OrganizationHandler) Update(w http.ResponseWriter, r *http.Request) {
 		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, httpx.ErrInternalServerError)
 		return
 	}
-	data := &OrganizationPayload{}
+	data := &organizationPayload{}
 	if err := httpx.DecodeJSON(r, data); err != nil {
 		httpx.ResponseJSONError(w, r, http.StatusBadRequest, err)
 		return

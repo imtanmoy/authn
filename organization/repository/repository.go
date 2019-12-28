@@ -32,7 +32,7 @@ func (r repository) Save(ctx context.Context, org *models.Organization) (*models
 	return org, err
 }
 
-func (r repository) Find(ctx context.Context, id int32) (*models.Organization, error) {
+func (r repository) Find(ctx context.Context, id int) (*models.Organization, error) {
 	db := r.db.WithContext(ctx)
 	if !r.Exists(ctx, id) {
 		return nil, errors.New("organization does not exist")
@@ -42,9 +42,9 @@ func (r repository) Find(ctx context.Context, id int32) (*models.Organization, e
 	return &org, err
 }
 
-func (r repository) Exists(ctx context.Context, id int32) bool {
+func (r repository) Exists(ctx context.Context, id int) bool {
 	db := r.db.WithContext(ctx)
-	var num int32
+	var num int
 	_, err := db.Query(pg.Scan(&num), "SELECT id from organizations where id = ?", id)
 	if err != nil {
 		panic(err)

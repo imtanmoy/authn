@@ -5,6 +5,9 @@ import (
 	_orgDeliveryHttp "github.com/imtanmoy/authn/organization/delivery/http"
 	_orgRepo "github.com/imtanmoy/authn/organization/repository"
 	_orgUseCase "github.com/imtanmoy/authn/organization/usecase"
+	_userDeliveryHttp "github.com/imtanmoy/authn/user/delivery/http"
+	_userRepo "github.com/imtanmoy/authn/user/repository"
+	_userUseCase "github.com/imtanmoy/authn/user/usecase"
 	"time"
 
 	"github.com/go-chi/chi"
@@ -28,10 +31,13 @@ func New() (*chi.Mux, error) {
 	timeoutContext := 30 * time.Millisecond * time.Second //TODO it will come from config
 
 	orgRepo := _orgRepo.NewRepository(db.DB)
+	userRepo := _userRepo.NewRepository(db.DB)
 
 	orgUseCase := _orgUseCase.NewUseCase(orgRepo, timeoutContext)
+	userUseCase := _userUseCase.NewUseCase(userRepo, timeoutContext)
 
 	_orgDeliveryHttp.NewHandler(r, orgUseCase)
+	_userDeliveryHttp.NewHandler(r, userUseCase)
 
 	return r, nil
 }

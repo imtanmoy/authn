@@ -8,11 +8,11 @@ import (
 
 // Organization represent organizations table
 type Organization struct {
-	ID        int32     `pg:"id,notnull,unique"`
+	ID        int       `pg:"id,notnull,unique,pk"`
 	Name      string    `pg:"name,notnull"`
 	CreatedAt time.Time `pg:"created_at,notnull,default:now()"`
 	UpdatedAt time.Time `pg:"updated_at,notnull,default:now()"`
-	//Users []*User `pg:"fk:organization_id"`
+	Users     []*User   `pg:"fk:organization_id"`
 }
 
 var _ orm.BeforeInsertHook = (*Organization)(nil)
@@ -37,7 +37,7 @@ func (o *Organization) BeforeUpdate(ctx context.Context) (context.Context, error
 }
 
 type OrganizationResponse struct {
-	ID   int32  `json:"id"`
+	ID   int    `json:"id"`
 	Name string `json:"name"`
 }
 
