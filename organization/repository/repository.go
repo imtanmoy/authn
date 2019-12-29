@@ -6,6 +6,7 @@ import (
 	"github.com/go-pg/pg/v9"
 	"github.com/imtanmoy/authn/models"
 	"github.com/imtanmoy/authn/organization"
+	"github.com/imtanmoy/godbx"
 )
 
 type repository struct {
@@ -23,6 +24,7 @@ func (r repository) FindAll(ctx context.Context) ([]*models.Organization, error)
 	db := r.db.WithContext(ctx)
 	var organizations []*models.Organization
 	err := db.Model(&organizations).Select()
+	err = godbx.ParsePgError(err)
 	return organizations, err
 }
 

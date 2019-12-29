@@ -7,6 +7,7 @@ require (
 	github.com/go-pg/pg/v9 v9.1.0
 	github.com/go-pg/urlstruct v0.2.9 // indirect
 	github.com/golang/protobuf v1.3.2
+	github.com/imtanmoy/godbx v0.0.1
 	github.com/imtanmoy/httpx v0.0.3
 	github.com/imtanmoy/logx v0.0.3
 	github.com/oceanicdev/chi-param v1.1.0
@@ -17,6 +18,7 @@ require (
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/spf13/viper v1.6.1
+	golang.org/x/crypto v0.0.0-20191227163750-53104e6ec876 // indirect
 	golang.org/x/net v0.0.0-20191209160850-c0dbc17a3553 // indirect
 	golang.org/x/sys v0.0.0-20191218084908-4a24b4065292 // indirect
 	google.golang.org/genproto v0.0.0-20191216205247-b31c10ee225f // indirect
