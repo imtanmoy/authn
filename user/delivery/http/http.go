@@ -5,7 +5,6 @@ import (
 	"errors"
 	"github.com/go-chi/chi"
 	"github.com/imtanmoy/authn/models"
-	"github.com/imtanmoy/authn/pkg/errorx"
 	"github.com/imtanmoy/authn/user"
 	"github.com/imtanmoy/httpx"
 	"gopkg.in/thedevsaddam/govalidator.v1"
@@ -117,7 +116,6 @@ func (uh *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 	u.OrganizationId = data.OrganizationId
 
 	err := uh.useCase.Store(ctx, &u)
-	err = errorx.ErrorNotFound
 	if err != nil {
 		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, err)
 		return
