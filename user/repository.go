@@ -11,6 +11,7 @@ type Repository interface {
 	Save(ctx context.Context, u *models.User) error
 	Find(ctx context.Context, id int) (*models.User, error)
 	Exists(ctx context.Context, id int) bool
+	ExistsByEmail(ctx context.Context, email string) bool
 	Delete(ctx context.Context, u *models.User) error
 	Update(ctx context.Context, u *models.User) error
 }

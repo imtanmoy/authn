@@ -13,4 +13,5 @@ type UseCase interface {
 	Update(ctx context.Context, u *models.User) error
 	Delete(ctx context.Context, u *models.User) error
 	Exists(ctx context.Context, id int) bool
+	ExistsByEmail(ctx context.Context, email string) bool
 }

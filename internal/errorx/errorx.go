@@ -3,5 +3,6 @@ package errorx
 import "errors"
 
 var (
-	ErrorNotFound = errors.New("not found")
+	ErrorNotFound   = errors.New("resource not found")
+	ErrTokenExpired = errors.New("token expired")
 )

@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"github.com/imtanmoy/authn/internal/errorx"
 	"github.com/imtanmoy/authn/models"
 	"github.com/imtanmoy/authn/user"
 	"time"
@@ -31,17 +32,24 @@ func (uc *useCase) Store(ctx context.Context, u *models.User) error {
 }
 
 func (uc *useCase) GetById(ctx context.Context, id int) (*models.User, error) {
-	panic("implement me")
+	if !uc.Exists(ctx, id) {
+		return nil, errorx.ErrorNotFound
+	}
+	return uc.userRepo.Find(ctx, id)
 }
 
 func (uc *useCase) Update(ctx context.Context, u *models.User) error {
-	panic("implement me")
+	return uc.userRepo.Update(ctx, u)
 }
 
 func (uc *useCase) Delete(ctx context.Context, u *models.User) error {
-	panic("implement me")
+	return uc.userRepo.Delete(ctx, u)
 }
 
 func (uc *useCase) Exists(ctx context.Context, id int) bool {
-	panic("implement me")
+	return uc.userRepo.Exists(ctx, id)
+}
+
+func (uc *useCase) ExistsByEmail(ctx context.Context, email string) bool {
+	return uc.userRepo.ExistsByEmail(ctx, email)
 }
