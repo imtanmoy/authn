@@ -118,7 +118,7 @@ func (uh *UserHandler) UserCtx(next http.Handler) http.Handler {
 			httpx.ResponseJSONError(w, r, http.StatusBadRequest, "invalid request parameter", err)
 			return
 		}
-		org, err := uh.useCase.GetById(ctx, id)
+		u, err := uh.useCase.GetById(ctx, id)
 		if err != nil {
 			if errors.Is(err, errorx.ErrorNotFound) {
 				httpx.ResponseJSONError(w, r, http.StatusNotFound, "user not found", err)
@@ -127,7 +127,7 @@ func (uh *UserHandler) UserCtx(next http.Handler) http.Handler {
 			}
 			return
 		}
-		ctx = context.WithValue(r.Context(), userKey, org)
+		ctx = context.WithValue(r.Context(), userKey, u)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

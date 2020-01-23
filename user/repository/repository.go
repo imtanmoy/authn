@@ -59,6 +59,14 @@ func (repo *repository) Find(ctx context.Context, id int) (*models.User, error) 
 	return &u, err
 }
 
+func (repo *repository) FindByEmail(ctx context.Context, email string) (*models.User, error) {
+	db := repo.db.WithContext(ctx)
+	var u models.User
+	err := db.Model(&u).Where("email = ?", email).Select()
+	err = godbx.ParsePgError(err)
+	return &u, err
+}
+
 func (repo *repository) Exists(ctx context.Context, id int) bool {
 	db := repo.db.WithContext(ctx)
 	u := new(models.User)

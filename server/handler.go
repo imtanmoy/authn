@@ -1,6 +1,8 @@
 package server
 
 import (
+	_authDeliveryHttp "github.com/imtanmoy/authn/auth/delivery/http"
+	_authUseCase "github.com/imtanmoy/authn/auth/usecase"
 	"github.com/imtanmoy/authn/db"
 	_orgDeliveryHttp "github.com/imtanmoy/authn/organization/delivery/http"
 	_orgRepo "github.com/imtanmoy/authn/organization/repository"
@@ -35,9 +37,11 @@ func New() (*chi.Mux, error) {
 
 	orgUseCase := _orgUseCase.NewUseCase(orgRepo, timeoutContext)
 	userUseCase := _userUseCase.NewUseCase(userRepo, timeoutContext)
+	authUseCase := _authUseCase.NewUseCase(userRepo, timeoutContext)
 
 	_orgDeliveryHttp.NewHandler(r, orgUseCase)
 	_userDeliveryHttp.NewHandler(r, userUseCase)
+	_authDeliveryHttp.NewHandler(r, authUseCase)
 
 	return r, nil
 }
