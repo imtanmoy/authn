@@ -43,7 +43,7 @@ func (r *repository) Find(ctx context.Context, id int) (*models.Organization, er
 
 func (r *repository) Exists(ctx context.Context, id int) bool {
 	db := r.db.WithContext(ctx)
-	var o *models.Organization
+	o := new(models.Organization)
 	err := db.Model(o).Where("id = ?", id).Select()
 	if err != nil {
 		if errors.Is(err, pg.ErrNoRows) {

@@ -61,7 +61,7 @@ func (repo *repository) Find(ctx context.Context, id int) (*models.User, error) 
 
 func (repo *repository) Exists(ctx context.Context, id int) bool {
 	db := repo.db.WithContext(ctx)
-	var u *models.User
+	u := new(models.User)
 	err := db.Model(u).Where("id = ?", id).Select()
 	if err != nil {
 		if errors.Is(err, pg.ErrNoRows) {
@@ -75,7 +75,7 @@ func (repo *repository) Exists(ctx context.Context, id int) bool {
 
 func (repo *repository) ExistsByEmail(ctx context.Context, email string) bool {
 	db := repo.db.WithContext(ctx)
-	var u *models.User
+	u := new(models.User)
 	err := db.Model(u).Where("email = ?", email).Select()
 	if err != nil {
 		if errors.Is(err, pg.ErrNoRows) {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/go-chi/chi"
+	"github.com/imtanmoy/authn/internal/authlib"
 	"github.com/imtanmoy/authn/internal/errorx"
 	"github.com/imtanmoy/authn/models"
 	"github.com/imtanmoy/authn/user"
@@ -169,14 +170,20 @@ func (uh *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	hashedPassword, err := authlib.HashPassword(data.Password)
+	if err != nil {
+		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, "could not create user, try again")
+		return
+	}
+
 	var u models.User
 	u.Name = data.Name
 	u.Email = data.Email
-	u.Password = data.Password
+	u.Password = hashedPassword
 	u.Designation = data.Designation
 	u.OrganizationId = data.OrganizationId
 
-	err := uh.useCase.Store(ctx, &u)
+	err = uh.useCase.Store(ctx, &u)
 	if err != nil {
 		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, err)
 		return
@@ -224,12 +231,17 @@ func (uh *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
 	u.Name = data.Name
 	u.Designation = data.Designation
 	if data.Password != "" {
-		u.Password = data.Password
+		hashedPassword, err := authlib.HashPassword(data.Password)
+		if err != nil {
+			httpx.ResponseJSONError(w, r, http.StatusInternalServerError, "could not update user, try again")
+			return
+		}
+		u.Password = hashedPassword
 	}
 
 	err := uh.useCase.Update(ctx, u)
 	if err != nil {
-		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, err)
+		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, "could not update user, try again", err)
 		return
 	}
 	httpx.ResponseJSON(w, http.StatusCreated, models.NewUserResponse(u))
