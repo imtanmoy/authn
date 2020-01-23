@@ -138,7 +138,7 @@ func (uh *UserHandler) List(w http.ResponseWriter, r *http.Request) {
 	}
 	users, err := uh.useCase.FindAll(ctx)
 	if err != nil {
-		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, err)
+		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, "could not fetch user's list", err)
 		return
 	}
 
@@ -245,7 +245,7 @@ func (uh *UserHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 	err := uh.useCase.Delete(ctx, u)
 	if err != nil {
-		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, err)
+		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, "could not delete user, try again", err)
 		return
 	}
 	httpx.NoContent(w)

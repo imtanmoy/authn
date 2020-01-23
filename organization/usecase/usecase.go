@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"github.com/imtanmoy/authn/internal/errorx"
 	"github.com/imtanmoy/authn/models"
 	"github.com/imtanmoy/authn/organization"
 	"time"
@@ -36,6 +37,9 @@ func (u *useCase) Store(ctx context.Context, org *models.Organization) error {
 }
 
 func (u *useCase) GetById(ctx context.Context, id int) (*models.Organization, error) {
+	if !u.Exists(ctx, id) {
+		return nil, errorx.ErrorNotFound
+	}
 	return u.orgRepo.Find(ctx, id)
 }
 

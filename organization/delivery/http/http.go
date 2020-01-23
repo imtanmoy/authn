@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/go-chi/chi"
+	"github.com/imtanmoy/authn/internal/errorx"
 	"github.com/imtanmoy/authn/models"
 	"github.com/imtanmoy/authn/organization"
 	"github.com/imtanmoy/httpx"
@@ -73,7 +74,11 @@ func (oh *OrganizationHandler) OrganizationCtx(next http.Handler) http.Handler {
 		}
 		org, err := oh.useCase.GetById(ctx, id)
 		if err != nil {
-			httpx.ResponseJSONError(w, r, http.StatusNotFound, "organization not found", err)
+			if errors.Is(err, errorx.ErrorNotFound) {
+				httpx.ResponseJSONError(w, r, http.StatusNotFound, "organization not found", err)
+			} else {
+				httpx.ResponseJSONError(w, r, http.StatusInternalServerError, err)
+			}
 			return
 		}
 		ctx = context.WithValue(r.Context(), orgKey, org)
@@ -181,7 +186,7 @@ func (oh *OrganizationHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 	err := oh.useCase.Delete(ctx, org)
 	if err != nil {
-		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, err)
+		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, "could not delete organization", err)
 		return
 	}
 	httpx.NoContent(w)
