@@ -79,6 +79,7 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	token, err := authlib.GenerateToken(u.Email)
 	if err != nil {
 		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, err)
+		return
 	}
 	httpx.ResponseJSON(w, http.StatusCreated, struct {
 		Token string `json:"token"`
@@ -87,10 +88,6 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 }
 
 func (ah *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	if ctx == nil {
-		ctx = context.Background()
-	}
 	httpx.NoContent(w)
 }
 

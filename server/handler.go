@@ -4,6 +4,7 @@ import (
 	_authDeliveryHttp "github.com/imtanmoy/authn/auth/delivery/http"
 	_authUseCase "github.com/imtanmoy/authn/auth/usecase"
 	"github.com/imtanmoy/authn/db"
+	"github.com/imtanmoy/authn/internal/authlib"
 	_orgDeliveryHttp "github.com/imtanmoy/authn/organization/delivery/http"
 	_orgRepo "github.com/imtanmoy/authn/organization/repository"
 	_orgUseCase "github.com/imtanmoy/authn/organization/usecase"
@@ -34,6 +35,8 @@ func New() (*chi.Mux, error) {
 
 	orgRepo := _orgRepo.NewRepository(db.DB)
 	userRepo := _userRepo.NewRepository(db.DB)
+
+	authlib.NewAuthLib(userRepo).Init()
 
 	orgUseCase := _orgUseCase.NewUseCase(orgRepo, timeoutContext)
 	userUseCase := _userUseCase.NewUseCase(userRepo, timeoutContext)

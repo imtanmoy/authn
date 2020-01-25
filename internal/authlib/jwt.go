@@ -7,6 +7,8 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/google/uuid"
 	"github.com/imtanmoy/authn/config"
+	"github.com/imtanmoy/authn/internal/errorx"
+	"github.com/imtanmoy/authn/models"
 	"github.com/imtanmoy/httpx"
 	"net/http"
 	"strings"
@@ -29,7 +31,7 @@ type Claims struct {
 
 func GenerateToken(identity string) (string, error) {
 	now := time.Now()
-	expirationTime := now.Add(60 * time.Minute)
+	expirationTime := now.Add(1 * time.Minute)
 	claims := &Claims{
 		Identity: identity,
 		StandardClaims: jwt.StandardClaims{
@@ -48,11 +50,6 @@ func GenerateToken(identity string) (string, error) {
 
 func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-		if ctx == nil {
-			httpx.ResponseJSONError(w, r, http.StatusInternalServerError, httpx.ErrInternalServerError)
-			return
-		}
 		token, err := fromAuthHeader(r)
 		if err != nil {
 			var ae *AuthError
@@ -75,12 +72,27 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			return jwtKey, nil
 		})
 		if err != nil {
+			message := ""
 			if errors.Is(err, jwt.ErrSignatureInvalid) {
 				message := fmt.Sprintf("Unexpected signing method: %v", parsedToken.Header["alg"])
 				httpx.ResponseJSONError(w, r, http.StatusBadRequest, message)
 				return
 			}
-			httpx.ResponseJSONError(w, r, http.StatusInternalServerError, httpx.ErrInternalServerError)
+			if ve, ok := err.(*jwt.ValidationError); ok {
+				if ve.Errors&jwt.ValidationErrorMalformed != 0 {
+					message = "malformed token"
+				} else if ve.Errors&(jwt.ValidationErrorExpired|jwt.ValidationErrorNotValidYet) != 0 {
+					message = "token is expired"
+				} else {
+					message = ve.Error()
+				}
+				if message == "" {
+					message = httpx.ErrInternalServerError.Error()
+				}
+				httpx.ResponseJSONError(w, r, http.StatusBadRequest, message)
+				return
+			}
+			httpx.ResponseJSONError(w, r, http.StatusInternalServerError, err)
 			return
 		}
 		if !parsedToken.Valid {
@@ -93,9 +105,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			httpx.ResponseJSONError(w, r, http.StatusInternalServerError, httpx.ErrInternalServerError)
 			return
 		}
-		fmt.Println(claims.Identity)
-		ctx = context.WithValue(r.Context(), identityKey, claims.Identity)
-		next.ServeHTTP(w, r.WithContext(ctx))
+		setCurrentUserAndServe(w, r, next, claims.Identity)
 	})
 }
 
@@ -111,4 +121,32 @@ func fromAuthHeader(r *http.Request) (string, error) {
 		return "", &AuthError{Message: "authorization header format must be bearer type", Code: http.StatusBadRequest, Status: http.StatusBadRequest}
 	}
 	return authHeaderParts[1], nil
+}
+
+func setCurrentUserAndServe(w http.ResponseWriter, r *http.Request, next http.Handler, identity string) {
+	ctx := r.Context()
+	if ctx == nil {
+		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, httpx.ErrInternalServerError)
+		return
+	}
+	u, err := auth.GetUser(ctx, identity)
+	if err != nil {
+		if errors.Is(err, errorx.ErrorNotFound) {
+			httpx.ResponseJSONError(w, r, http.StatusNotFound, "user not found", err)
+		} else {
+			httpx.ResponseJSONError(w, r, http.StatusInternalServerError, err)
+		}
+		return
+	}
+	ctx = context.WithValue(r.Context(), identityKey, u)
+	next.ServeHTTP(w, r.WithContext(ctx))
+}
+
+func GetCurrentUser(r *http.Request) (*models.User, error) {
+	ctx := r.Context()
+	u, ok := ctx.Value(identityKey).(*models.User)
+	if !ok {
+		return nil, errorx.ErrInternalServer
+	}
+	return u, nil
 }
