@@ -3,10 +3,12 @@ module github.com/imtanmoy/authn
 go 1.13
 
 require (
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/go-chi/chi v4.0.2+incompatible
 	github.com/go-pg/pg/v9 v9.1.0
 	github.com/go-pg/urlstruct v0.2.9 // indirect
 	github.com/golang/protobuf v1.3.2
+	github.com/google/uuid v1.1.1
 	github.com/imtanmoy/godbx v0.0.1
 	github.com/imtanmoy/httpx v0.0.3
 	github.com/imtanmoy/logx v0.0.3

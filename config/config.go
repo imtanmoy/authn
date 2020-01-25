@@ -12,6 +12,7 @@ import (
 type Config struct {
 	ENVIRONMENT string `mapstructure:"environment"`
 	DEBUG       bool   `mapstructure:"debug"`
+	SECRET_KEY  string `mapstructure:"secret_key"`
 	SERVER      server
 	DB          db
 }

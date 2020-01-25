@@ -7,7 +7,6 @@ import (
 	"github.com/imtanmoy/authn/auth"
 	"github.com/imtanmoy/authn/internal/authlib"
 	"github.com/imtanmoy/authn/internal/errorx"
-	"github.com/imtanmoy/authn/models"
 	"github.com/imtanmoy/httpx"
 	"gopkg.in/thedevsaddam/govalidator.v1"
 	"net/http"
@@ -76,11 +75,23 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		httpx.ResponseJSONError(w, r, http.StatusBadRequest, "invalid credentials", err)
 		return
 	}
-	httpx.ResponseJSON(w, http.StatusCreated, models.NewUserResponse(u))
+
+	token, err := authlib.GenerateToken(u.Email)
+	if err != nil {
+		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, err)
+	}
+	httpx.ResponseJSON(w, http.StatusCreated, struct {
+		Token string `json:"token"`
+	}{Token: token})
+	return
 }
 
 func (ah *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
-
+	ctx := r.Context()
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	httpx.NoContent(w)
 }
 
 // NewHandler will initialize the user's resources endpoint
@@ -90,6 +101,9 @@ func NewHandler(r *chi.Mux, useCase auth.UseCase) {
 	}
 	r.Route("/", func(r chi.Router) {
 		r.Post("/login", handler.Login)
-		r.Post("/logout", handler.Logout)
+		r.Group(func(r chi.Router) {
+			r.Use(authlib.AuthMiddleware)
+			r.Post("/logout", handler.Logout)
+		})
 	})
 }

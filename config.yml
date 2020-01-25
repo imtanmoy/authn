@@ -1,5 +1,6 @@
 debug: true
 environment: development #production, development
+secret_key: secret_key
 server:
   host: 0.0.0.0
   port: 8080
