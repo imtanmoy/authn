@@ -69,7 +69,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, jwt.ErrSignatureInvalid
 			}
-			return auth.secretKey, nil
+			return []byte(auth.secretKey), nil
 		})
 		if err != nil {
 			message := ""
