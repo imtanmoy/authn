@@ -9,13 +9,15 @@ import (
 )
 
 type authLib struct {
-	userRepo user.Repository
+	userRepo              user.Repository
+	secretKey             string
+	accessTokenExpireTime int
 }
 
 var auth *authLib
 
-func NewAuthLib(userRepo user.Repository) *authLib {
-	return &authLib{userRepo: userRepo}
+func NewAuthLib(userRepo user.Repository, secretKey string, accessTokenExpireTime int) *authLib {
+	return &authLib{userRepo: userRepo, secretKey: secretKey, accessTokenExpireTime: accessTokenExpireTime}
 }
 
 func (al *authLib) Init() {

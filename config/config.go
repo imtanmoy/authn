@@ -10,11 +10,12 @@ import (
 
 // Config contains env variables
 type Config struct {
-	ENVIRONMENT string `mapstructure:"environment"`
-	DEBUG       bool   `mapstructure:"debug"`
-	SECRET_KEY  string `mapstructure:"secret_key"`
-	SERVER      server
-	DB          db
+	ENVIRONMENT              string `mapstructure:"environment"`
+	DEBUG                    bool   `mapstructure:"debug"`
+	JWT_SECRET_KEY           string `mapstructure:"jwt_secret_key"`
+	JWT_ACCESS_TOKEN_EXPIRES int    `mapstructure:"jwt_access_token_expires"`
+	SERVER                   server
+	DB                       db
 }
 
 type server struct {

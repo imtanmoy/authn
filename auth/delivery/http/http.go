@@ -7,6 +7,7 @@ import (
 	"github.com/imtanmoy/authn/auth"
 	"github.com/imtanmoy/authn/internal/authlib"
 	"github.com/imtanmoy/authn/internal/errorx"
+	"github.com/imtanmoy/authn/models"
 	"github.com/imtanmoy/httpx"
 	"gopkg.in/thedevsaddam/govalidator.v1"
 	"net/http"
@@ -91,6 +92,19 @@ func (ah *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	httpx.NoContent(w)
 }
 
+func (ah *AuthHandler) GetMe(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	u, err := authlib.GetCurrentUser(r)
+	if err != nil {
+		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, err)
+	}
+	httpx.ResponseJSON(w, http.StatusOK, models.NewUserResponse(u))
+	return
+}
+
 // NewHandler will initialize the user's resources endpoint
 func NewHandler(r *chi.Mux, useCase auth.UseCase) {
 	handler := &AuthHandler{
@@ -101,6 +115,7 @@ func NewHandler(r *chi.Mux, useCase auth.UseCase) {
 		r.Group(func(r chi.Router) {
 			r.Use(authlib.AuthMiddleware)
 			r.Post("/logout", handler.Logout)
+			r.Get("/me", handler.GetMe)
 		})
 	})
 }

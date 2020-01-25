@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/google/uuid"
-	"github.com/imtanmoy/authn/config"
 	"github.com/imtanmoy/authn/internal/errorx"
 	"github.com/imtanmoy/authn/models"
 	"github.com/imtanmoy/httpx"
@@ -21,8 +20,6 @@ const (
 	identityKey contextKey = "identity"
 )
 
-var jwtKey = []byte(config.Conf.SECRET_KEY)
-
 // Create a struct that will be encoded to a JWT
 type Claims struct {
 	Identity string `json:"identity"`
@@ -30,8 +27,11 @@ type Claims struct {
 }
 
 func GenerateToken(identity string) (string, error) {
+	if auth == nil {
+		return "", errors.New("authlib is not initiated")
+	}
 	now := time.Now()
-	expirationTime := now.Add(1 * time.Minute)
+	expirationTime := now.Add(time.Duration(auth.accessTokenExpireTime) * time.Minute)
 	claims := &Claims{
 		Identity: identity,
 		StandardClaims: jwt.StandardClaims{
@@ -44,7 +44,7 @@ func GenerateToken(identity string) (string, error) {
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	// Create the JWT string
-	tokenString, err := token.SignedString(jwtKey)
+	tokenString, err := token.SignedString([]byte(auth.secretKey))
 	return tokenString, err
 }
 
@@ -69,7 +69,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, jwt.ErrSignatureInvalid
 			}
-			return jwtKey, nil
+			return auth.secretKey, nil
 		})
 		if err != nil {
 			message := ""

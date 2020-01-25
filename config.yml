@@ -1,6 +1,7 @@
 debug: true
 environment: development #production, development
-secret_key: secret_key
+jwt_secret_key: secret_key
+jwt_access_token_expires: 1 #in minutes
 server:
   host: 0.0.0.0
   port: 8080
