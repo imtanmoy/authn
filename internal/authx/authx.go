@@ -3,15 +3,12 @@ package authx
 import (
 	"context"
 	"errors"
-	"fmt"
 	"github.com/dgrijalva/jwt-go"
-	"github.com/google/uuid"
 	"github.com/imtanmoy/authn/internal/errorx"
 	"github.com/imtanmoy/authn/models"
 	"github.com/imtanmoy/authn/user"
 	"github.com/imtanmoy/httpx"
 	"net/http"
-	"time"
 )
 
 type contextKey string
@@ -53,34 +50,14 @@ func (ax *Authx) AuthMiddleware(next http.Handler) http.Handler {
 			httpx.ResponseJSONError(w, r, 400, 400, errorMsg)
 			return
 		}
-		parsedToken, err := jwt.ParseWithClaims(token, &Claims{}, func(token *jwt.Token) (interface{}, error) {
-			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, jwt.ErrSignatureInvalid
-			}
-			return []byte(ax.secretKey), nil
-		})
+		parsedToken, err := parseToken(token, ax.secretKey)
 		if err != nil {
-			message := ""
-			if errors.Is(err, jwt.ErrSignatureInvalid) {
-				message := fmt.Sprintf("Unexpected signing method: %v", parsedToken.Header["alg"])
-				httpx.ResponseJSONError(w, r, http.StatusBadRequest, message)
-				return
+			var ae *AuthError
+			if errors.As(err, &ae) {
+				httpx.ResponseJSONError(w, r, ae.Status, ae.Code, ae.Message)
+			} else {
+				httpx.ResponseJSONError(w, r, http.StatusInternalServerError, err)
 			}
-			if ve, ok := err.(*jwt.ValidationError); ok {
-				if ve.Errors&jwt.ValidationErrorMalformed != 0 {
-					message = "malformed token"
-				} else if ve.Errors&(jwt.ValidationErrorExpired|jwt.ValidationErrorNotValidYet) != 0 {
-					message = "token is expired"
-				} else {
-					message = ve.Error()
-				}
-				if message == "" {
-					message = httpx.ErrInternalServerError.Error()
-				}
-				httpx.ResponseJSONError(w, r, http.StatusBadRequest, message)
-				return
-			}
-			httpx.ResponseJSONError(w, r, http.StatusInternalServerError, err)
 			return
 		}
 		if !parsedToken.Valid {
@@ -137,20 +114,6 @@ func (ax *Authx) setCurrentUserAndServe(w http.ResponseWriter, r *http.Request, 
 }
 
 func (ax *Authx) GenerateToken(identity string) (string, error) {
-	now := time.Now()
-	expirationTime := now.Add(time.Duration(ax.accessTokenExpireTime) * time.Minute)
-	claims := &Claims{
-		Identity: identity,
-		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: expirationTime.Unix(),
-			Id:        uuid.New().String(),
-			IssuedAt:  now.Unix(),
-			NotBefore: now.Unix(),
-			Subject:   identity,
-		},
-	}
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	// Create the JWT string
-	tokenString, err := token.SignedString([]byte(ax.secretKey))
+	tokenString, err := createToken(identity, ax.secretKey, ax.accessTokenExpireTime)
 	return tokenString, err
 }
