@@ -23,14 +23,18 @@ type Claims struct {
 	jwt.StandardClaims
 }
 
-type Authx struct {
-	userRepo              user.Repository
-	secretKey             string
-	accessTokenExpireTime int
+type AuthxConfig struct {
+	SecretKey             string
+	AccessTokenExpireTime int
 }
 
-func New(userRepo user.Repository, secretKey string, accessTokenExpireTime int) *Authx {
-	return &Authx{userRepo: userRepo, secretKey: secretKey, accessTokenExpireTime: accessTokenExpireTime}
+type Authx struct {
+	userRepo user.Repository
+	config   *AuthxConfig
+}
+
+func New(userRepo user.Repository, config *AuthxConfig) *Authx {
+	return &Authx{userRepo: userRepo, config: config}
 }
 
 func (ax *Authx) AuthMiddleware(next http.Handler) http.Handler {
@@ -45,7 +49,7 @@ func (ax *Authx) AuthMiddleware(next http.Handler) http.Handler {
 			}
 			return
 		}
-		parsedToken, err := parseToken(token, ax.secretKey)
+		parsedToken, err := parseToken(token, ax.config.secretKey)
 		if err != nil {
 			var ae *AuthError
 			if errors.As(err, &ae) {
@@ -109,6 +113,6 @@ func (ax *Authx) setCurrentUserAndServe(w http.ResponseWriter, r *http.Request, 
 }
 
 func (ax *Authx) GenerateToken(identity string) (string, error) {
-	tokenString, err := createToken(identity, ax.secretKey, ax.accessTokenExpireTime)
+	tokenString, err := createToken(identity, ax.config.secretKey, ax.config.accessTokenExpireTime)
 	return tokenString, err
 }

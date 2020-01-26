@@ -37,7 +37,12 @@ func New() (*chi.Mux, error) {
 	orgRepo := _orgRepo.NewRepository(db.DB)
 	userRepo := _userRepo.NewRepository(db.DB)
 
-	au := authx.New(userRepo, config.Conf.JWT_SECRET_KEY, config.Conf.JWT_ACCESS_TOKEN_EXPIRES)
+	authxConfig := authx.AuthxConfig{
+		SecretKey:             config.Conf.JWT_SECRET_KEY,
+		AccessTokenExpireTime: config.Conf.JWT_ACCESS_TOKEN_EXPIRES,
+	}
+
+	au := authx.New(userRepo, &authxConfig)
 
 	orgUseCase := _orgUseCase.NewUseCase(orgRepo, timeoutContext)
 	userUseCase := _userUseCase.NewUseCase(userRepo, timeoutContext)
