@@ -49,7 +49,7 @@ func (ax *Authx) AuthMiddleware(next http.Handler) http.Handler {
 			}
 			return
 		}
-		parsedToken, err := parseToken(token, ax.config.secretKey)
+		parsedToken, err := parseToken(token, ax.config.SecretKey)
 		if err != nil {
 			var ae *AuthError
 			if errors.As(err, &ae) {
@@ -113,6 +113,6 @@ func (ax *Authx) setCurrentUserAndServe(w http.ResponseWriter, r *http.Request, 
 }
 
 func (ax *Authx) GenerateToken(identity string) (string, error) {
-	tokenString, err := createToken(identity, ax.config.secretKey, ax.config.accessTokenExpireTime)
+	tokenString, err := createToken(identity, ax.config.SecretKey, ax.config.AccessTokenExpireTime)
 	return tokenString, err
 }
