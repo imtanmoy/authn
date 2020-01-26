@@ -3,6 +3,7 @@ package http
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/go-chi/chi"
 	"github.com/imtanmoy/authn/auth"
 	"github.com/imtanmoy/authn/internal/authx"
@@ -101,7 +102,7 @@ func (ah *AuthHandler) GetMe(w http.ResponseWriter, r *http.Request) {
 	u, err := ah.GetCurrentUser(r)
 	us, ok := u.(*models.User)
 	if err != nil || !ok {
-		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, err)
+		panic(fmt.Sprintf("could not upgrade user to an authable user, type: %T", u))
 	}
 	httpx.ResponseJSON(w, http.StatusOK, models.NewUserResponse(us))
 	return

@@ -43,8 +43,6 @@ type AuthUser interface {
 	GetId() (id int)
 	GetEmail() (email string)
 	GetEnabled() (enabled bool)
-	GetPassword() (password string)
-	PutPassword(password string)
 }
 
 type AuthRepo interface {
