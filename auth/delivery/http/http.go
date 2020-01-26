@@ -37,6 +37,7 @@ func (o *loginPayload) validate() url.Values {
 // AuthHandler  represent the http handler for auth
 type AuthHandler struct {
 	useCase auth.UseCase
+	*authx.Authx
 }
 
 func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
@@ -72,12 +73,12 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-	if !authx.ComparePasswords(data.Password, u.Password) {
+	if !ah.ComparePasswords(data.Password, u.Password) {
 		httpx.ResponseJSONError(w, r, http.StatusBadRequest, "invalid credentials", err)
 		return
 	}
 
-	token, err := authx.GenerateToken(u.Email)
+	token, err := ah.GenerateToken(u.Email)
 	if err != nil {
 		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, err)
 		return
@@ -97,7 +98,7 @@ func (ah *AuthHandler) GetMe(w http.ResponseWriter, r *http.Request) {
 	if ctx == nil {
 		ctx = context.Background()
 	}
-	u, err := authx.GetCurrentUser(r)
+	u, err := ah.GetCurrentUser(r)
 	if err != nil {
 		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, err)
 	}
@@ -106,14 +107,15 @@ func (ah *AuthHandler) GetMe(w http.ResponseWriter, r *http.Request) {
 }
 
 // NewHandler will initialize the user's resources endpoint
-func NewHandler(r *chi.Mux, useCase auth.UseCase) {
+func NewHandler(r *chi.Mux, useCase auth.UseCase, aux *authx.Authx) {
 	handler := &AuthHandler{
 		useCase: useCase,
+		Authx:   aux,
 	}
 	r.Route("/", func(r chi.Router) {
 		r.Post("/login", handler.Login)
 		r.Group(func(r chi.Router) {
-			r.Use(authx.AuthMiddleware)
+			r.Use(handler.AuthMiddleware)
 			r.Post("/logout", handler.Logout)
 			r.Get("/me", handler.GetMe)
 		})

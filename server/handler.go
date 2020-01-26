@@ -37,15 +37,15 @@ func New() (*chi.Mux, error) {
 	orgRepo := _orgRepo.NewRepository(db.DB)
 	userRepo := _userRepo.NewRepository(db.DB)
 
-	authx.New(userRepo, config.Conf.JWT_SECRET_KEY, config.Conf.JWT_ACCESS_TOKEN_EXPIRES).Init()
+	au := authx.New(userRepo, config.Conf.JWT_SECRET_KEY, config.Conf.JWT_ACCESS_TOKEN_EXPIRES)
 
 	orgUseCase := _orgUseCase.NewUseCase(orgRepo, timeoutContext)
 	userUseCase := _userUseCase.NewUseCase(userRepo, timeoutContext)
 	authUseCase := _authUseCase.NewUseCase(userRepo, timeoutContext)
 
 	_orgDeliveryHttp.NewHandler(r, orgUseCase)
-	_userDeliveryHttp.NewHandler(r, userUseCase)
-	_authDeliveryHttp.NewHandler(r, authUseCase)
+	_userDeliveryHttp.NewHandler(r, userUseCase, au)
+	_authDeliveryHttp.NewHandler(r, authUseCase, au)
 
 	return r, nil
 }

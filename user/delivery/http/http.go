@@ -87,12 +87,14 @@ func (u *userUpdatePayload) validate(ctx context.Context, useCase user.UseCase) 
 // UserHandler  represent the http handler for user
 type UserHandler struct {
 	useCase user.UseCase
+	*authx.Authx
 }
 
 // NewHandler will initialize the user's resources endpoint
-func NewHandler(r *chi.Mux, useCase user.UseCase) {
+func NewHandler(r *chi.Mux, useCase user.UseCase, au *authx.Authx) {
 	handler := &UserHandler{
 		useCase: useCase,
+		Authx:   au,
 	}
 	r.Route("/users", func(r chi.Router) {
 		r.Get("/", handler.List)
@@ -170,7 +172,7 @@ func (uh *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	hashedPassword, err := authx.HashPassword(data.Password)
+	hashedPassword, err := uh.HashPassword(data.Password)
 	if err != nil {
 		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, "could not create user, try again")
 		return
@@ -231,7 +233,7 @@ func (uh *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
 	u.Name = data.Name
 	u.Designation = data.Designation
 	if data.Password != "" {
-		hashedPassword, err := authx.HashPassword(data.Password)
+		hashedPassword, err := uh.HashPassword(data.Password)
 		if err != nil {
 			httpx.ResponseJSONError(w, r, http.StatusInternalServerError, "could not update user, try again")
 			return
