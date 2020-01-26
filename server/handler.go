@@ -5,7 +5,7 @@ import (
 	_authUseCase "github.com/imtanmoy/authn/auth/usecase"
 	"github.com/imtanmoy/authn/config"
 	"github.com/imtanmoy/authn/db"
-	"github.com/imtanmoy/authn/internal/authlib"
+	"github.com/imtanmoy/authn/internal/authx"
 	_orgDeliveryHttp "github.com/imtanmoy/authn/organization/delivery/http"
 	_orgRepo "github.com/imtanmoy/authn/organization/repository"
 	_orgUseCase "github.com/imtanmoy/authn/organization/usecase"
@@ -37,7 +37,7 @@ func New() (*chi.Mux, error) {
 	orgRepo := _orgRepo.NewRepository(db.DB)
 	userRepo := _userRepo.NewRepository(db.DB)
 
-	authlib.NewAuthLib(userRepo, config.Conf.JWT_SECRET_KEY, config.Conf.JWT_ACCESS_TOKEN_EXPIRES).Init()
+	authx.New(userRepo, config.Conf.JWT_SECRET_KEY, config.Conf.JWT_ACCESS_TOKEN_EXPIRES).Init()
 
 	orgUseCase := _orgUseCase.NewUseCase(orgRepo, timeoutContext)
 	userUseCase := _userUseCase.NewUseCase(userRepo, timeoutContext)

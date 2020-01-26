@@ -5,7 +5,7 @@ import (
 	"errors"
 	"github.com/go-chi/chi"
 	"github.com/imtanmoy/authn/auth"
-	"github.com/imtanmoy/authn/internal/authlib"
+	"github.com/imtanmoy/authn/internal/authx"
 	"github.com/imtanmoy/authn/internal/errorx"
 	"github.com/imtanmoy/authn/models"
 	"github.com/imtanmoy/httpx"
@@ -72,12 +72,12 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-	if !authlib.ComparePasswords(data.Password, u.Password) {
+	if !authx.ComparePasswords(data.Password, u.Password) {
 		httpx.ResponseJSONError(w, r, http.StatusBadRequest, "invalid credentials", err)
 		return
 	}
 
-	token, err := authlib.GenerateToken(u.Email)
+	token, err := authx.GenerateToken(u.Email)
 	if err != nil {
 		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, err)
 		return
@@ -97,7 +97,7 @@ func (ah *AuthHandler) GetMe(w http.ResponseWriter, r *http.Request) {
 	if ctx == nil {
 		ctx = context.Background()
 	}
-	u, err := authlib.GetCurrentUser(r)
+	u, err := authx.GetCurrentUser(r)
 	if err != nil {
 		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, err)
 	}
@@ -113,7 +113,7 @@ func NewHandler(r *chi.Mux, useCase auth.UseCase) {
 	r.Route("/", func(r chi.Router) {
 		r.Post("/login", handler.Login)
 		r.Group(func(r chi.Router) {
-			r.Use(authlib.AuthMiddleware)
+			r.Use(authx.AuthMiddleware)
 			r.Post("/logout", handler.Logout)
 			r.Get("/me", handler.GetMe)
 		})

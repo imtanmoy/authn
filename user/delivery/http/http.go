@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/go-chi/chi"
-	"github.com/imtanmoy/authn/internal/authlib"
+	"github.com/imtanmoy/authn/internal/authx"
 	"github.com/imtanmoy/authn/internal/errorx"
 	"github.com/imtanmoy/authn/models"
 	"github.com/imtanmoy/authn/user"
@@ -170,7 +170,7 @@ func (uh *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	hashedPassword, err := authlib.HashPassword(data.Password)
+	hashedPassword, err := authx.HashPassword(data.Password)
 	if err != nil {
 		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, "could not create user, try again")
 		return
@@ -231,7 +231,7 @@ func (uh *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
 	u.Name = data.Name
 	u.Designation = data.Designation
 	if data.Password != "" {
-		hashedPassword, err := authlib.HashPassword(data.Password)
+		hashedPassword, err := authx.HashPassword(data.Password)
 		if err != nil {
 			httpx.ResponseJSONError(w, r, http.StatusInternalServerError, "could not update user, try again")
 			return

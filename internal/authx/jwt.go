@@ -1,4 +1,4 @@
-package authlib
+package authx
 
 import (
 	"context"
@@ -27,11 +27,8 @@ type Claims struct {
 }
 
 func GenerateToken(identity string) (string, error) {
-	if auth == nil {
-		return "", errors.New("authlib is not initiated")
-	}
 	now := time.Now()
-	expirationTime := now.Add(time.Duration(auth.accessTokenExpireTime) * time.Minute)
+	expirationTime := now.Add(time.Duration(authenticator.accessTokenExpireTime) * time.Minute)
 	claims := &Claims{
 		Identity: identity,
 		StandardClaims: jwt.StandardClaims{
@@ -44,7 +41,7 @@ func GenerateToken(identity string) (string, error) {
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	// Create the JWT string
-	tokenString, err := token.SignedString([]byte(auth.secretKey))
+	tokenString, err := token.SignedString([]byte(authenticator.secretKey))
 	return tokenString, err
 }
 
@@ -69,7 +66,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, jwt.ErrSignatureInvalid
 			}
-			return []byte(auth.secretKey), nil
+			return []byte(authenticator.secretKey), nil
 		})
 		if err != nil {
 			message := ""
@@ -129,7 +126,7 @@ func setCurrentUserAndServe(w http.ResponseWriter, r *http.Request, next http.Ha
 		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, httpx.ErrInternalServerError)
 		return
 	}
-	u, err := auth.GetUser(ctx, identity)
+	u, err := getUser(ctx, identity)
 	if err != nil {
 		if errors.Is(err, errorx.ErrorNotFound) {
 			httpx.ResponseJSONError(w, r, http.StatusNotFound, "user not found", err)

@@ -1,4 +1,4 @@
-package authlib
+package authx
 
 type AuthError struct {
 	Message string
