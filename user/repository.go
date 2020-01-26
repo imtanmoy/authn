@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"github.com/imtanmoy/authn/internal/authx"
 	"github.com/imtanmoy/authn/models"
 )
 
@@ -15,4 +16,5 @@ type Repository interface {
 	Delete(ctx context.Context, u *models.User) error
 	Update(ctx context.Context, u *models.User) error
 	FindByEmail(ctx context.Context, email string) (*models.User, error)
+	GetByEmail(ctx context.Context, identity string) (authx.AuthUser, error)
 }

@@ -73,7 +73,7 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-	if !ah.ComparePasswords(data.Password, u.Password) {
+	if !ah.VerifyPassword(u, data.Password) {
 		httpx.ResponseJSONError(w, r, http.StatusBadRequest, "invalid credentials", err)
 		return
 	}
@@ -99,10 +99,11 @@ func (ah *AuthHandler) GetMe(w http.ResponseWriter, r *http.Request) {
 		ctx = context.Background()
 	}
 	u, err := ah.GetCurrentUser(r)
-	if err != nil {
+	us, ok := u.(*models.User)
+	if err != nil || !ok {
 		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, err)
 	}
-	httpx.ResponseJSON(w, http.StatusOK, models.NewUserResponse(u))
+	httpx.ResponseJSON(w, http.StatusOK, models.NewUserResponse(us))
 	return
 }
 

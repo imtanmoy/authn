@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/go-pg/pg/v9"
+	"github.com/imtanmoy/authn/internal/authx"
 	"github.com/imtanmoy/authn/internal/errorx"
 	"github.com/imtanmoy/authn/models"
 	"github.com/imtanmoy/authn/user"
@@ -65,6 +66,10 @@ func (repo *repository) FindByEmail(ctx context.Context, email string) (*models.
 	err := db.Model(&u).Where("email = ?", email).Select()
 	err = godbx.ParsePgError(err)
 	return &u, err
+}
+
+func (repo *repository) GetByEmail(ctx context.Context, identity string) (authx.AuthUser, error) {
+	return repo.FindByEmail(ctx, identity)
 }
 
 func (repo *repository) Exists(ctx context.Context, id int) bool {

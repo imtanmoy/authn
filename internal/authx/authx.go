@@ -5,8 +5,6 @@ import (
 	"errors"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/imtanmoy/authn/internal/errorx"
-	"github.com/imtanmoy/authn/models"
-	"github.com/imtanmoy/authn/user"
 	"github.com/imtanmoy/httpx"
 	"net/http"
 )
@@ -29,11 +27,32 @@ type AuthxConfig struct {
 }
 
 type Authx struct {
-	userRepo user.Repository
+	userRepo AuthRepo
 	config   *AuthxConfig
 }
 
-func New(userRepo user.Repository, config *AuthxConfig) *Authx {
+// AuthableUser is identified by a password
+type AuthableUser interface {
+	GetEmail() (email string)
+	GetPassword() (password string)
+	PutPassword(password string)
+}
+
+// AuthUser is identified by a password
+type AuthUser interface {
+	GetId() (id int)
+	GetEmail() (email string)
+	GetEnabled() (enabled bool)
+	GetPassword() (password string)
+	PutPassword(password string)
+}
+
+type AuthRepo interface {
+	ExistsByEmail(ctx context.Context, identity string) bool
+	GetByEmail(ctx context.Context, identity string) (AuthUser, error)
+}
+
+func New(userRepo AuthRepo, config *AuthxConfig) *Authx {
 	return &Authx{userRepo: userRepo, config: config}
 }
 
@@ -49,7 +68,7 @@ func (ax *Authx) AuthMiddleware(next http.Handler) http.Handler {
 			}
 			return
 		}
-		parsedToken, err := parseToken(token, ax.config.secretKey)
+		parsedToken, err := parseToken(token, ax.config.SecretKey)
 		if err != nil {
 			var ae *AuthError
 			if errors.As(err, &ae) {
@@ -73,20 +92,20 @@ func (ax *Authx) AuthMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func (ax *Authx) getUser(ctx context.Context, identity string) (*models.User, error) {
+func (ax *Authx) getUser(ctx context.Context, identity string) (AuthUser, error) {
 	if !ax.userRepo.ExistsByEmail(ctx, identity) {
 		return nil, errorx.ErrorNotFound
 	}
-	u, err := ax.userRepo.FindByEmail(ctx, identity)
+	u, err := ax.userRepo.GetByEmail(ctx, identity)
 	if err != nil {
 		return nil, err
 	}
 	return u, nil
 }
 
-func (ax *Authx) GetCurrentUser(r *http.Request) (*models.User, error) {
+func (ax *Authx) GetCurrentUser(r *http.Request) (AuthUser, error) {
 	ctx := r.Context()
-	u, ok := ctx.Value(identityKey).(*models.User)
+	u, ok := ctx.Value(identityKey).(AuthUser)
 	if !ok {
 		return nil, errorx.ErrInternalServer
 	}
@@ -113,6 +132,17 @@ func (ax *Authx) setCurrentUserAndServe(w http.ResponseWriter, r *http.Request, 
 }
 
 func (ax *Authx) GenerateToken(identity string) (string, error) {
-	tokenString, err := createToken(identity, ax.config.secretKey, ax.config.accessTokenExpireTime)
+	tokenString, err := createToken(identity, ax.config.SecretKey, ax.config.AccessTokenExpireTime)
 	return tokenString, err
+}
+
+// VerifyPassword uses mechanisms to check that a password is correct.
+// Returns nil on success otherwise there will be an error. Simply a helper
+// to do the bcrypt comparison.
+func (ax *Authx) VerifyPassword(user AuthableUser, password string) bool {
+	return comparePasswords(user.GetPassword(), password)
+}
+
+func (ax *Authx) HashPassword(password string) (string, error) {
+	return hashPassword(password)
 }
