@@ -45,11 +45,6 @@ func (ax *Authx) AuthMiddleware(next http.Handler) http.Handler {
 			}
 			return
 		}
-		if token == "" {
-			errorMsg := "Required authorization token not found"
-			httpx.ResponseJSONError(w, r, 400, 400, errorMsg)
-			return
-		}
 		parsedToken, err := parseToken(token, ax.secretKey)
 		if err != nil {
 			var ae *AuthError
