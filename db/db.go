@@ -53,6 +53,9 @@ func connectDB(username, password, database, address string) (*pg.DB, error) {
 }
 
 func Shutdown() error {
-	err := DB.Close()
-	return err
+	return closeDB(DB)
+}
+
+func closeDB(db *pg.DB) error {
+	return db.Close()
 }
