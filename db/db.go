@@ -23,7 +23,7 @@ func (d dbLogger) AfterQuery(c context.Context, q *pg.QueryEvent) error {
 }
 
 func InitDB() error {
-	db, err := ConnectDB(
+	db, err := connectDB(
 		config.Conf.DB.USERNAME,
 		config.Conf.DB.PASSWORD,
 		config.Conf.DB.DBNAME,
@@ -37,7 +37,7 @@ func InitDB() error {
 	return nil
 }
 
-func ConnectDB(username, password, database, address string) (*pg.DB, error) {
+func connectDB(username, password, database, address string) (*pg.DB, error) {
 	db := pg.Connect(&pg.Options{
 		User:     username,
 		Password: password,

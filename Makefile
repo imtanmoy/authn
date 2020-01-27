@@ -63,7 +63,7 @@ run: rm build
 
 test:
 	@echo "Starting test..."
-	go test ./tests
+	go test ./...
 	@echo "Finish test..."
 
 # -------------------------------------------------------------------
