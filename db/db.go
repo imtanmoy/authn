@@ -23,20 +23,33 @@ func (d dbLogger) AfterQuery(c context.Context, q *pg.QueryEvent) error {
 }
 
 func InitDB() error {
-	db := pg.Connect(&pg.Options{
-		User:     config.Conf.DB.USERNAME,
-		Password: config.Conf.DB.PASSWORD,
-		Database: config.Conf.DB.DBNAME,
-		Addr:     config.Conf.DB.HOST + ":" + strconv.Itoa(config.Conf.DB.PORT),
-	})
-	var n int
-	_, err := db.QueryOne(pg.Scan(&n), "SELECT 1")
+	db, err := ConnectDB(
+		config.Conf.DB.USERNAME,
+		config.Conf.DB.PASSWORD,
+		config.Conf.DB.DBNAME,
+		config.Conf.DB.HOST+":"+strconv.Itoa(config.Conf.DB.PORT),
+	)
 	if err != nil {
 		return err
 	}
 	db.AddQueryHook(dbLogger{})
 	DB = db
 	return nil
+}
+
+func ConnectDB(username, password, database, address string) (*pg.DB, error) {
+	db := pg.Connect(&pg.Options{
+		User:     username,
+		Password: password,
+		Database: database,
+		Addr:     address,
+	})
+	var n int
+	_, err := db.QueryOne(pg.Scan(&n), "SELECT 1")
+	if err != nil {
+		return nil, err
+	}
+	return db, nil
 }
 
 func Shutdown() error {
