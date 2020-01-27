@@ -61,6 +61,11 @@ uninstall:
 run: rm build
 	$(BIN_DIR)/$(BIN_FILE) serve
 
+test:
+	@echo "Starting test..."
+	go test ./tests
+	@echo "Finish test..."
+
 # -------------------------------------------------------------------
 # -								Docker								-
 # -------------------------------------------------------------------
