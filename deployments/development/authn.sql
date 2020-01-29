@@ -55,8 +55,8 @@ CREATE TABLE invites
 (
     id              BIGSERIAL     NOT NULL,
     email           VARCHAR(255)  NOT NULL,
-    token           VARCHAR(16)   NOT NULL,
-    status          invite_status NOT NULL,
+    token           VARCHAR(32)   NOT NULL,
+    status          invite_status NOT NULL DEFAULT 'pending',
     organization_id BIGINT        NOT NULL,
     user_id         BIGINT        NULL,
     invited_by      BIGINT        NOT NULL,

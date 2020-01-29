@@ -108,6 +108,10 @@ func (ah *AuthHandler) GetMe(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
+func (ah *AuthHandler) SignUp(w http.ResponseWriter, r *http.Request) {
+
+}
+
 // NewHandler will initialize the user's resources endpoint
 func NewHandler(r *chi.Mux, useCase auth.UseCase, aux *authx.Authx) {
 	handler := &AuthHandler{
@@ -116,6 +120,7 @@ func NewHandler(r *chi.Mux, useCase auth.UseCase, aux *authx.Authx) {
 	}
 	r.Route("/", func(r chi.Router) {
 		r.Post("/login", handler.Login)
+		r.Post("/signup", handler.SignUp)
 		r.Group(func(r chi.Router) {
 			r.Use(handler.AuthMiddleware)
 			r.Post("/logout", handler.Logout)

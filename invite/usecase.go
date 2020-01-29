@@ -13,5 +13,5 @@ type UseCase interface {
 	Update(ctx context.Context, u *models.Invite) error
 	Delete(ctx context.Context, u *models.Invite) error
 	Exists(ctx context.Context, id int) bool
-	ExistsByEmail(ctx context.Context, email string) bool
+	FindByEmailAndOrganization(ctx context.Context, email string, oid int) (*models.Invite, error)
 }

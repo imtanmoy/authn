@@ -12,12 +12,16 @@ type useCase struct {
 	contextTimeout time.Duration
 }
 
+func (uc *useCase) FindByEmailAndOrganization(ctx context.Context, email string, oid int) (*models.Invite, error) {
+	return uc.inviteRepo.FindByEmailAndOrganization(ctx, email, oid)
+}
+
 func (uc *useCase) FindAll(ctx context.Context) ([]*models.Invite, error) {
 	panic("implement me")
 }
 
 func (uc *useCase) Store(ctx context.Context, u *models.Invite) error {
-	panic("implement me")
+	return uc.inviteRepo.Save(ctx, u)
 }
 
 func (uc *useCase) GetById(ctx context.Context, id int) (*models.Invite, error) {
