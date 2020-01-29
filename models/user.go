@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-// Organization represent organizations table
+// User represent users table
 type User struct {
 	ID             int       `pg:"id,notnull,unique,pk"`
 	Name           string    `pg:"name,notnull"`
