@@ -6,6 +6,9 @@ import (
 	"github.com/imtanmoy/authn/config"
 	"github.com/imtanmoy/authn/db"
 	"github.com/imtanmoy/authn/internal/authx"
+	_inviteDeliveryHttp "github.com/imtanmoy/authn/invite/delivery/http"
+	_inviteRepo "github.com/imtanmoy/authn/invite/repository"
+	_inviteUseCase "github.com/imtanmoy/authn/invite/usecase"
 	_orgDeliveryHttp "github.com/imtanmoy/authn/organization/delivery/http"
 	_orgRepo "github.com/imtanmoy/authn/organization/repository"
 	_orgUseCase "github.com/imtanmoy/authn/organization/usecase"
@@ -36,6 +39,7 @@ func New() (*chi.Mux, error) {
 
 	orgRepo := _orgRepo.NewRepository(db.DB)
 	userRepo := _userRepo.NewRepository(db.DB)
+	inviteRepo := _inviteRepo.NewRepository(db.DB)
 
 	authxConfig := authx.AuthxConfig{
 		SecretKey:             config.Conf.JWT_SECRET_KEY,
@@ -47,10 +51,12 @@ func New() (*chi.Mux, error) {
 	orgUseCase := _orgUseCase.NewUseCase(orgRepo, timeoutContext)
 	userUseCase := _userUseCase.NewUseCase(userRepo, timeoutContext)
 	authUseCase := _authUseCase.NewUseCase(userRepo, timeoutContext)
+	inviteUseCase := _inviteUseCase.NewUseCase(inviteRepo, timeoutContext)
 
 	_orgDeliveryHttp.NewHandler(r, orgUseCase)
 	_userDeliveryHttp.NewHandler(r, userUseCase, au)
-	_authDeliveryHttp.NewHandler(r, authUseCase, au)
+	_authDeliveryHttp.NewHandler(r, authUseCase, userUseCase, inviteUseCase, au)
+	_inviteDeliveryHttp.NewHandler(r, inviteUseCase, orgUseCase, au)
 
 	return r, nil
 }

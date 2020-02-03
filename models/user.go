@@ -3,10 +3,11 @@ package models
 import (
 	"context"
 	"github.com/go-pg/pg/v9/orm"
+	"github.com/imtanmoy/authn/internal/authx"
 	"time"
 )
 
-// Organization represent organizations table
+// User represent users table
 type User struct {
 	ID             int       `pg:"id,notnull,unique,pk"`
 	Name           string    `pg:"name,notnull"`
@@ -24,26 +25,48 @@ type User struct {
 	DeletedAt      time.Time `pg:"deleted_at,soft_delete"`
 }
 
-var _ orm.BeforeInsertHook = (*User)(nil)
-var _ orm.BeforeUpdateHook = (*User)(nil)
-
 //BeforeInsert hooks
-func (o *User) BeforeInsert(ctx context.Context) (context.Context, error) {
+func (u *User) BeforeInsert(ctx context.Context) (context.Context, error) {
 	now := time.Now()
-	if o.CreatedAt.IsZero() {
-		o.CreatedAt = now
+	if u.CreatedAt.IsZero() {
+		u.CreatedAt = now
 	}
-	if o.UpdatedAt.IsZero() {
-		o.UpdatedAt = now
+	if u.UpdatedAt.IsZero() {
+		u.UpdatedAt = now
 	}
 	return ctx, nil
 }
 
 //BeforeUpdate hooks
-func (o *User) BeforeUpdate(ctx context.Context) (context.Context, error) {
-	o.UpdatedAt = time.Now()
+func (u *User) BeforeUpdate(ctx context.Context) (context.Context, error) {
+	u.UpdatedAt = time.Now()
 	return ctx, nil
 }
+
+func (u *User) GetEmail() (email string) {
+	return u.Email
+}
+
+func (u *User) GetPassword() (password string) {
+	return u.Password
+}
+
+func (u *User) PutPassword(password string) {
+	panic("implement me")
+}
+
+func (u *User) GetId() (id int) {
+	return u.ID
+}
+
+func (u *User) GetEnabled() (enabled bool) {
+	return u.Enabled
+}
+
+var _ orm.BeforeInsertHook = (*User)(nil)
+var _ orm.BeforeUpdateHook = (*User)(nil)
+var _ authx.AuthableUser = (*User)(nil)
+var _ authx.AuthUser = (*User)(nil)
 
 type UserResponse struct {
 	ID          int    `json:"id"`

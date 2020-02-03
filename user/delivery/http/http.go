@@ -63,7 +63,7 @@ type userUpdatePayload struct {
 	Designation     string `json:"designation"`
 }
 
-func (u *userUpdatePayload) validate(ctx context.Context, useCase user.UseCase) url.Values {
+func (u *userUpdatePayload) validate() url.Values {
 	rules := govalidator.MapData{
 		"name":             []string{"required", "min:4", "max:100"},
 		"password":         []string{"min:8", "max:20"},
@@ -223,7 +223,7 @@ func (uh *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	validationErrors := data.validate(ctx, uh.useCase)
+	validationErrors := data.validate()
 
 	if len(validationErrors) > 0 {
 		httpx.ResponseJSONError(w, r, 400, "invalid request", validationErrors)
