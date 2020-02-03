@@ -77,8 +77,6 @@ func createSuperUser(storage *pg.DB) {
 		u.Name = "Super User"
 		u.Email = "su@gmail.com"
 		u.Password = hashedPassword
-		u.Designation = "SU"
-		u.OrganizationId = o.ID
 
 		err = userRepo.Save(ctx, &u)
 		if err != nil {

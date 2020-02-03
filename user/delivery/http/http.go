@@ -182,8 +182,6 @@ func (uh *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 	u.Name = data.Name
 	u.Email = data.Email
 	u.Password = hashedPassword
-	u.Designation = data.Designation
-	u.OrganizationId = data.OrganizationId
 
 	err = uh.useCase.Store(ctx, &u)
 	if err != nil {
@@ -231,7 +229,6 @@ func (uh *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	u.Name = data.Name
-	u.Designation = data.Designation
 	if data.Password != "" {
 		hashedPassword, err := uh.HashPassword(data.Password)
 		if err != nil {

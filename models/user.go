@@ -9,20 +9,14 @@ import (
 
 // User represent users table
 type User struct {
-	ID             int       `pg:"id,notnull,unique,pk"`
-	Name           string    `pg:"name,notnull"`
-	Designation    string    `pg:"designation"`
-	Email          string    `pg:"email,notnull,unique:idx_email_deleted_at"`
-	Password       string    `pg:"password"`
-	Enabled        bool      `pg:"enabled,notnull,default:TRUE"`
-	OrganizationId int       `pg:"organization_id,notnull"`
-	CreatedBy      int       `pg:"created_by,notnull"`
-	UpdatedBy      int       `pg:"updated_by,notnull"`
-	DeletedBy      int       `pg:"deleted_by,notnull"`
-	JoinedAt       time.Time `pg:"joined_at"`
-	CreatedAt      time.Time `pg:"created_at,notnull,default:now()"`
-	UpdatedAt      time.Time `pg:"updated_at,notnull,default:now()"`
-	DeletedAt      time.Time `pg:"deleted_at,soft_delete"`
+	ID            int             `pg:"id,notnull,unique,pk"`
+	Name          string          `pg:"name,notnull"`
+	Email         string          `pg:"email,notnull,unique:idx_email_deleted_at"`
+	Password      string          `pg:"password"`
+	CreatedAt     time.Time       `pg:"created_at,notnull,default:now()"`
+	UpdatedAt     time.Time       `pg:"updated_at,notnull,default:now()"`
+	DeletedAt     time.Time       `pg:"deleted_at,soft_delete"`
+	Organizations []*Organization `pg:"many2many:user_organization"`
 }
 
 //BeforeInsert hooks
@@ -59,10 +53,6 @@ func (u *User) GetId() (id int) {
 	return u.ID
 }
 
-func (u *User) GetEnabled() (enabled bool) {
-	return u.Enabled
-}
-
 var _ orm.BeforeInsertHook = (*User)(nil)
 var _ orm.BeforeUpdateHook = (*User)(nil)
 var _ authx.AuthableUser = (*User)(nil)
@@ -77,10 +67,9 @@ type UserResponse struct {
 
 func NewUserResponse(u *User) *UserResponse {
 	resp := &UserResponse{
-		ID:          u.ID,
-		Name:        u.Name,
-		Designation: u.Designation,
-		Email:       u.Email,
+		ID:    u.ID,
+		Name:  u.Name,
+		Email: u.Email,
 	}
 	return resp
 }

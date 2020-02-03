@@ -42,7 +42,6 @@ type AuthableUser interface {
 type AuthUser interface {
 	GetId() (id int)
 	GetEmail() (email string)
-	GetEnabled() (enabled bool)
 }
 
 type AuthRepo interface {

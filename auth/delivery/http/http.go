@@ -192,8 +192,6 @@ func (handler *AuthHandler) SignUp(w http.ResponseWriter, r *http.Request) {
 	u.Name = data.Name
 	u.Email = tokenUser.Email
 	u.Password = hashedPassword
-	u.Designation = data.Designation
-	u.OrganizationId = tokenUser.OrganizationId
 
 	err = handler.userUseCase.Store(ctx, &u)
 	if err != nil {

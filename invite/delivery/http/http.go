@@ -104,11 +104,11 @@ func (handler *InviteHandler) SendInvite(w http.ResponseWriter, r *http.Request)
 		goto ReturnError
 	}
 
-	if data.OrganizationId != 0 {
-		if data.OrganizationId != us.OrganizationId {
-			validationErrors.Add("organization_id", "invalid organization provided")
-		}
-	}
+	//if data.OrganizationId != 0 {
+	//	if data.OrganizationId != us.Organizations[] {
+	//		validationErrors.Add("organization_id", "invalid organization provided")
+	//	}
+	//}
 
 ReturnError:
 	if len(validationErrors) > 0 {

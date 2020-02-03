@@ -15,6 +15,7 @@ type Invite struct {
 	OrganizationId int       `pg:"organization_id,notnull"`
 	UserId         int       `pg:"user_id"`
 	InvitedBy      int       `pg:"invited_by,notnull"`
+	AcceptedAt     time.Time `pg:"accepted_at"`
 	CreatedAt      time.Time `pg:"created_at,notnull,default:now()"`
 	UpdatedAt      time.Time `pg:"updated_at,notnull,default:now()"`
 }
