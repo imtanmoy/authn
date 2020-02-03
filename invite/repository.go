@@ -16,4 +16,5 @@ type Repository interface {
 	ExistsByEmail(ctx context.Context, email string) bool
 	Delete(ctx context.Context, u *models.Invite) error
 	FindByEmailAndOrganization(ctx context.Context, email string, oid int) (*models.Invite, error)
+	FindByToken(ctx context.Context, token string) (*models.Invite, error)
 }

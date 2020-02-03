@@ -55,7 +55,7 @@ func New() (*chi.Mux, error) {
 
 	_orgDeliveryHttp.NewHandler(r, orgUseCase)
 	_userDeliveryHttp.NewHandler(r, userUseCase, au)
-	_authDeliveryHttp.NewHandler(r, authUseCase, au)
+	_authDeliveryHttp.NewHandler(r, authUseCase, userUseCase, inviteUseCase, au)
 	_inviteDeliveryHttp.NewHandler(r, inviteUseCase, orgUseCase, au)
 
 	return r, nil

@@ -14,6 +14,20 @@ type repository struct {
 	db *pg.DB
 }
 
+func (repo *repository) FindByToken(ctx context.Context, token string) (*models.Invite, error) {
+	db := repo.db.WithContext(ctx)
+	var iv models.Invite
+	err := db.Model(&iv).Where("token = ?", token).Select()
+	if err != nil {
+		if errors.Is(err, pg.ErrNoRows) {
+			return nil, errorx.ErrorNotFound
+		} else {
+			panic(err)
+		}
+	}
+	return &iv, err
+}
+
 func (repo *repository) FindByEmailAndOrganization(ctx context.Context, email string, oid int) (*models.Invite, error) {
 	db := repo.db.WithContext(ctx)
 	u := new(models.Invite)

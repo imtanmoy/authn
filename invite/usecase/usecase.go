@@ -12,6 +12,10 @@ type useCase struct {
 	contextTimeout time.Duration
 }
 
+func (uc *useCase) FindByToken(ctx context.Context, token string) (*models.Invite, error) {
+	return uc.inviteRepo.FindByToken(ctx, token)
+}
+
 func (uc *useCase) FindByEmailAndOrganization(ctx context.Context, email string, oid int) (*models.Invite, error) {
 	return uc.inviteRepo.FindByEmailAndOrganization(ctx, email, oid)
 }
@@ -29,7 +33,7 @@ func (uc *useCase) GetById(ctx context.Context, id int) (*models.Invite, error) 
 }
 
 func (uc *useCase) Update(ctx context.Context, u *models.Invite) error {
-	panic("implement me")
+	return uc.inviteRepo.Update(ctx, u)
 }
 
 func (uc *useCase) Delete(ctx context.Context, u *models.Invite) error {
