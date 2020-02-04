@@ -11,8 +11,8 @@ func init() {
 type UserOrganization struct {
 	tableName struct{} `pg:"user_organization"`
 
-	UserId         int `pg:"user_id,notnull"`
+	UserId         int `pg:"user_id,notnull,pk"`
 	User           *User
-	OrganizationId int `pg:"organization_id,notnull"`
+	OrganizationId int `pg:"organization_id,notnull,pk"`
 	Organization   *Organization
 }

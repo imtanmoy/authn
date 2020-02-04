@@ -3,7 +3,9 @@ package http
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/go-chi/chi"
+	"github.com/imtanmoy/authn/internal/authx"
 	"github.com/imtanmoy/authn/internal/errorx"
 	"github.com/imtanmoy/authn/models"
 	"github.com/imtanmoy/authn/organization"
@@ -41,26 +43,33 @@ func (o *organizationPayload) validate() url.Values {
 // OrganizationHandler  represent the http handler for organization
 type OrganizationHandler struct {
 	useCase organization.UseCase
+	*authx.Authx
 }
 
 // NewHandler will initialize the organization's resources endpoint
-func NewHandler(r *chi.Mux, useCase organization.UseCase) {
+func NewHandler(r *chi.Mux, useCase organization.UseCase, aux *authx.Authx) {
 	handler := &OrganizationHandler{
 		useCase: useCase,
+		Authx:   aux,
 	}
 	r.Route("/organizations", func(r chi.Router) {
-		r.Get("/", handler.List)
-		r.Post("/", handler.Create)
 		r.Group(func(r chi.Router) {
-			r.Use(handler.OrganizationCtx)
-			r.Get("/{id}", handler.Get)
-			r.Put("/{id}", handler.Update)
-			r.Delete("/{id}", handler.Delete)
+			r.Use(handler.AuthMiddleware)
+			r.Post("/", handler.Create)
+			r.Get("/", handler.List)
+			r.Group(func(r chi.Router) {
+				r.Route("/{id}", func(r chi.Router) {
+					r.Use(handler.OrganizationCtx)
+					r.Get("/", handler.Get)
+					r.Put("/", handler.Update)
+					r.Delete("/", handler.Delete)
+				})
+			})
 		})
 	})
 }
 
-func (oh *OrganizationHandler) OrganizationCtx(next http.Handler) http.Handler {
+func (handler *OrganizationHandler) OrganizationCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		if ctx == nil {
@@ -72,7 +81,7 @@ func (oh *OrganizationHandler) OrganizationCtx(next http.Handler) http.Handler {
 			httpx.ResponseJSONError(w, r, http.StatusBadRequest, "Invalid request parameter", err)
 			return
 		}
-		org, err := oh.useCase.GetById(ctx, id)
+		org, err := handler.useCase.GetById(ctx, id)
 		if err != nil {
 			if errors.Is(err, errorx.ErrorNotFound) {
 				httpx.ResponseJSONError(w, r, http.StatusNotFound, "organization not found", err)
@@ -81,17 +90,33 @@ func (oh *OrganizationHandler) OrganizationCtx(next http.Handler) http.Handler {
 			}
 			return
 		}
+		u, err := handler.GetCurrentUser(r)
+		currentUser, ok := u.(*models.User)
+		if err != nil || !ok {
+			panic(fmt.Sprintf("could not upgrade user to an authable user, type: %T", u))
+		}
+		found := false
+		for _, b := range currentUser.Organizations {
+			if b.ID == org.ID {
+				found = true
+				break
+			}
+		}
+		if !found {
+			httpx.ResponseJSONError(w, r, http.StatusBadRequest, "organization not found")
+			return
+		}
 		ctx = context.WithValue(r.Context(), orgKey, org)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 
-func (oh *OrganizationHandler) List(w http.ResponseWriter, r *http.Request) {
+func (handler *OrganizationHandler) List(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	if ctx == nil {
 		ctx = context.Background()
 	}
-	organizations, err := oh.useCase.FindAll(ctx)
+	organizations, err := handler.useCase.FindAll(ctx)
 	if err != nil {
 		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, err)
 		return
@@ -101,10 +126,15 @@ func (oh *OrganizationHandler) List(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func (oh *OrganizationHandler) Create(w http.ResponseWriter, r *http.Request) {
+func (handler *OrganizationHandler) Create(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	if ctx == nil {
 		ctx = context.Background()
+	}
+	u, err := handler.GetCurrentUser(r)
+	currentUser, ok := u.(*models.User)
+	if err != nil || !ok {
+		panic(fmt.Sprintf("could not upgrade user to an authable user, type: %T", u))
 	}
 	data := &organizationPayload{}
 	if err := httpx.DecodeJSON(r, data); err != nil {
@@ -127,7 +157,7 @@ func (oh *OrganizationHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var org models.Organization
 	org.Name = data.Name
 
-	err := oh.useCase.Store(ctx, &org)
+	err = handler.useCase.Store(ctx, &org, currentUser)
 	if err != nil {
 		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, err)
 		return
@@ -136,23 +166,21 @@ func (oh *OrganizationHandler) Create(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func (oh *OrganizationHandler) Get(w http.ResponseWriter, r *http.Request) {
+func (handler *OrganizationHandler) Get(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	org, ok := ctx.Value(orgKey).(*models.Organization)
 	if !ok {
-		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, httpx.ErrInternalServerError)
-		return
+		panic(fmt.Sprintf("could not get organization, type: %T", org))
 	}
 	httpx.ResponseJSON(w, http.StatusOK, models.NewOrganizationResponse(org))
 	return
 }
 
-func (oh *OrganizationHandler) Update(w http.ResponseWriter, r *http.Request) {
+func (handler *OrganizationHandler) Update(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	org, ok := ctx.Value(orgKey).(*models.Organization)
 	if !ok {
-		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, httpx.ErrInternalServerError)
-		return
+		panic(fmt.Sprintf("could not get organization, type: %T", org))
 	}
 	data := &organizationPayload{}
 	if err := httpx.DecodeJSON(r, data); err != nil {
@@ -168,7 +196,7 @@ func (oh *OrganizationHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 	// update organization's data
 	org.Name = data.Name
-	err := oh.useCase.Update(ctx, org)
+	err := handler.useCase.Update(ctx, org)
 	if err != nil {
 		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, err)
 		return
@@ -177,16 +205,15 @@ func (oh *OrganizationHandler) Update(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func (oh *OrganizationHandler) Delete(w http.ResponseWriter, r *http.Request) {
+func (handler *OrganizationHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	org, ok := ctx.Value(orgKey).(*models.Organization)
 	if !ok {
-		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, httpx.ErrInternalServerError)
-		return
+		panic(fmt.Sprintf("could not get organization, type: %T", org))
 	}
-	err := oh.useCase.Delete(ctx, org)
+	err := handler.useCase.Delete(ctx, org)
 	if err != nil {
-		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, "could not delete organization", err)
+		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, err)
 		return
 	}
 	httpx.NoContent(w)

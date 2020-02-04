@@ -27,13 +27,16 @@ func (u *useCase) FindAll(ctx context.Context) ([]*models.Organization, error) {
 	return u.orgRepo.FindAll(ctx)
 }
 
-func (u *useCase) Store(ctx context.Context, org *models.Organization) error {
-	org1, err := u.orgRepo.Save(ctx, org)
+func (u *useCase) Store(ctx context.Context, org *models.Organization, user *models.User) error {
+	err := u.orgRepo.Save(ctx, org)
 	if err != nil {
 		return err
 	}
-	org = org1
-	return nil
+	var ou models.UserOrganization
+	ou.UserId = user.ID
+	ou.OrganizationId = org.ID
+	err = u.orgRepo.SaveUserOrganization(ctx, &ou)
+	return err
 }
 
 func (u *useCase) GetById(ctx context.Context, id int) (*models.Organization, error) {
@@ -48,6 +51,14 @@ func (u *useCase) Update(ctx context.Context, org *models.Organization) error {
 }
 
 func (u *useCase) Delete(ctx context.Context, org *models.Organization) error {
+	orgs, err := u.orgRepo.FindAllUserOrganizationByOid(ctx, org.ID)
+	if err != nil {
+		return err
+	}
+	err = u.orgRepo.DeleteUserOrganization(ctx, orgs)
+	if err != nil {
+		return err
+	}
 	return u.orgRepo.Delete(ctx, org)
 }
 

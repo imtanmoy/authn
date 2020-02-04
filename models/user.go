@@ -59,10 +59,9 @@ var _ authx.AuthableUser = (*User)(nil)
 var _ authx.AuthUser = (*User)(nil)
 
 type UserResponse struct {
-	ID          int    `json:"id"`
-	Name        string `json:"name"`
-	Designation string `json:"designation"`
-	Email       string `json:"email"`
+	ID    int    `json:"id"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
 }
 
 func NewUserResponse(u *User) *UserResponse {
