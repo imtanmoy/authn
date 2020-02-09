@@ -52,6 +52,12 @@ func (repo *repository) Save(ctx context.Context, u *models.User) error {
 	return err
 }
 
+func (repo *repository) SaveUserOrganization(ctx context.Context, orgUser *models.UserOrganization) error {
+	db := repo.db.WithContext(ctx)
+	err := db.Insert(orgUser)
+	return err
+}
+
 func (repo *repository) Find(ctx context.Context, id int) (*models.User, error) {
 	db := repo.db.WithContext(ctx)
 	var u models.User

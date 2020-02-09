@@ -54,7 +54,7 @@ func New() (*chi.Mux, error) {
 	inviteUseCase := _inviteUseCase.NewUseCase(inviteRepo, timeoutContext)
 
 	_orgDeliveryHttp.NewHandler(r, orgUseCase, au)
-	_userDeliveryHttp.NewHandler(r, userUseCase, au)
+	_userDeliveryHttp.NewHandler(r, userUseCase, orgUseCase, au)
 	_authDeliveryHttp.NewHandler(r, authUseCase, userUseCase, inviteUseCase, au)
 	_inviteDeliveryHttp.NewHandler(r, inviteUseCase, orgUseCase, au)
 

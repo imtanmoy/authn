@@ -142,6 +142,7 @@ func (handler *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 }
 
 func (handler *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
+	//TODO need to work on meaning full logout
 	httpx.NoContent(w)
 }
 

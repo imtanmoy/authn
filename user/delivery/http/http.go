@@ -3,10 +3,12 @@ package http
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/go-chi/chi"
 	"github.com/imtanmoy/authn/internal/authx"
 	"github.com/imtanmoy/authn/internal/errorx"
 	"github.com/imtanmoy/authn/models"
+	"github.com/imtanmoy/authn/organization"
 	"github.com/imtanmoy/authn/user"
 	"github.com/imtanmoy/httpx"
 	param "github.com/oceanicdev/chi-param"
@@ -112,41 +114,45 @@ func NewUserListResponse(users []*models.User) []*UserResponse {
 
 // UserHandler  represent the http handler for user
 type UserHandler struct {
-	useCase user.UseCase
+	useCase    user.UseCase
+	orgUseCase organization.UseCase
 	*authx.Authx
 }
 
 // NewHandler will initialize the user's resources endpoint
-func NewHandler(r *chi.Mux, useCase user.UseCase, au *authx.Authx) {
+func NewHandler(r *chi.Mux, useCase user.UseCase, orgUseCase organization.UseCase, au *authx.Authx) {
 	handler := &UserHandler{
-		useCase: useCase,
-		Authx:   au,
+		useCase:    useCase,
+		orgUseCase: orgUseCase,
+		Authx:      au,
 	}
 	r.Route("/users", func(r chi.Router) {
-		r.Get("/", handler.List)
-		r.Post("/", handler.Create)
 		r.Group(func(r chi.Router) {
-			r.Use(handler.UserCtx)
-			r.Get("/{id}", handler.Get)
-			r.Put("/{id}", handler.Update)
-			r.Delete("/{id}", handler.Delete)
+			r.Use(handler.AuthMiddleware)
+			r.Get("/", handler.List)
+			r.Post("/", handler.Create)
+			r.Group(func(r chi.Router) {
+				r.Use(handler.UserCtx)
+				r.Get("/{id}", handler.Get)
+				r.Put("/{id}", handler.Update)
+				r.Delete("/{id}", handler.Delete)
+			})
 		})
 	})
 }
 
-func (uh *UserHandler) UserCtx(next http.Handler) http.Handler {
+func (handler *UserHandler) UserCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		if ctx == nil {
-			httpx.ResponseJSONError(w, r, http.StatusInternalServerError, httpx.ErrInternalServerError)
-			return
+			ctx = context.Background()
 		}
 		id, err := param.Int(r, "id")
 		if err != nil {
 			httpx.ResponseJSONError(w, r, http.StatusBadRequest, "invalid request parameter", err)
 			return
 		}
-		u, err := uh.useCase.GetById(ctx, id)
+		u, err := handler.useCase.GetById(ctx, id)
 		if err != nil {
 			if errors.Is(err, errorx.ErrorNotFound) {
 				httpx.ResponseJSONError(w, r, http.StatusNotFound, "user not found", err)
@@ -160,12 +166,12 @@ func (uh *UserHandler) UserCtx(next http.Handler) http.Handler {
 	})
 }
 
-func (uh *UserHandler) List(w http.ResponseWriter, r *http.Request) {
+func (handler *UserHandler) List(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	if ctx == nil {
 		ctx = context.Background()
 	}
-	users, err := uh.useCase.FindAll(ctx)
+	users, err := handler.useCase.FindAll(ctx)
 	if err != nil {
 		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, "could not fetch user's list", err)
 		return
@@ -175,10 +181,15 @@ func (uh *UserHandler) List(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func (uh *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
+func (handler *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	if ctx == nil {
 		ctx = context.Background()
+	}
+	cu, err := handler.GetCurrentUser(r)
+	currentUser, ok := cu.(*models.User)
+	if err != nil || !ok {
+		panic(fmt.Sprintf("could not upgrade user to an authable user, type: %T", cu))
 	}
 	data := &userPayload{}
 	if err := httpx.DecodeJSON(r, data); err != nil {
@@ -191,14 +202,30 @@ func (uh *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	validationErrors := data.validate(ctx, uh.useCase)
+	validationErrors := data.validate(ctx, handler.useCase)
+
+	org, err := handler.orgUseCase.GetById(ctx, data.OrganizationId)
+	if err != nil {
+		validationErrors.Add("organization_id", "organization not found")
+	}
+
+	found := false
+	for _, b := range currentUser.Organizations {
+		if b.ID == data.OrganizationId {
+			found = true
+			break
+		}
+	}
+	if !found {
+		validationErrors.Add("organization_id", "organization not found")
+	}
 
 	if len(validationErrors) > 0 {
 		httpx.ResponseJSONError(w, r, 400, "invalid request", validationErrors)
 		return
 	}
 
-	hashedPassword, err := uh.HashPassword(data.Password)
+	hashedPassword, err := handler.HashPassword(data.Password)
 	if err != nil {
 		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, "could not create user, try again")
 		return
@@ -209,7 +236,7 @@ func (uh *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 	u.Email = data.Email
 	u.Password = hashedPassword
 
-	err = uh.useCase.Store(ctx, &u)
+	err = handler.useCase.StoreWithOrg(ctx, &u, org)
 	if err != nil {
 		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, err)
 		return
@@ -218,7 +245,7 @@ func (uh *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func (uh *UserHandler) Get(w http.ResponseWriter, r *http.Request) {
+func (handler *UserHandler) Get(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	u, ok := ctx.Value(userKey).(*models.User)
 	if !ok {
@@ -229,7 +256,7 @@ func (uh *UserHandler) Get(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func (uh *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
+func (handler *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	u, ok := ctx.Value(userKey).(*models.User)
 	if !ok {
@@ -256,7 +283,7 @@ func (uh *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 	u.Name = data.Name
 	if data.Password != "" {
-		hashedPassword, err := uh.HashPassword(data.Password)
+		hashedPassword, err := handler.HashPassword(data.Password)
 		if err != nil {
 			httpx.ResponseJSONError(w, r, http.StatusInternalServerError, "could not update user, try again")
 			return
@@ -264,7 +291,7 @@ func (uh *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
 		u.Password = hashedPassword
 	}
 
-	err := uh.useCase.Update(ctx, u)
+	err := handler.useCase.Update(ctx, u)
 	if err != nil {
 		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, "could not update user, try again", err)
 		return
@@ -273,14 +300,14 @@ func (uh *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func (uh *UserHandler) Delete(w http.ResponseWriter, r *http.Request) {
+func (handler *UserHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	u, ok := ctx.Value(userKey).(*models.User)
 	if !ok {
 		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, httpx.ErrInternalServerError)
 		return
 	}
-	err := uh.useCase.Delete(ctx, u)
+	err := handler.useCase.Delete(ctx, u)
 	if err != nil {
 		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, "could not delete user, try again", err)
 		return

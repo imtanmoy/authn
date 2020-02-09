@@ -13,6 +13,18 @@ type useCase struct {
 	contextTimeout time.Duration
 }
 
+func (uc *useCase) StoreWithOrg(ctx context.Context, u *models.User, org *models.Organization) error {
+	err := uc.userRepo.Save(ctx, u)
+	if err != nil {
+		return err
+	}
+	var ou models.UserOrganization
+	ou.UserId = u.ID
+	ou.OrganizationId = org.ID
+	err = uc.userRepo.SaveUserOrganization(ctx, &ou)
+	return err
+}
+
 var _ user.UseCase = (*useCase)(nil)
 
 // NewUseCase will create new an useCase object representation of user.UseCase interface
