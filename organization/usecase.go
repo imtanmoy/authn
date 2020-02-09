@@ -13,4 +13,5 @@ type UseCase interface {
 	Update(ctx context.Context, org *models.Organization) error
 	Delete(ctx context.Context, org *models.Organization) error
 	Exists(ctx context.Context, id int) bool
+	FindAllByUserId(ctx context.Context, id int) ([]*models.Organization, error)
 }

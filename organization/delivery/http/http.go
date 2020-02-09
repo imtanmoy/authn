@@ -116,7 +116,12 @@ func (handler *OrganizationHandler) List(w http.ResponseWriter, r *http.Request)
 	if ctx == nil {
 		ctx = context.Background()
 	}
-	organizations, err := handler.useCase.FindAll(ctx)
+	u, err := handler.GetCurrentUser(r)
+	currentUser, ok := u.(*models.User)
+	if err != nil || !ok {
+		panic(fmt.Sprintf("could not upgrade user to an authable user, type: %T", u))
+	}
+	organizations, err := handler.useCase.FindAllByUserId(ctx, currentUser.ID)
 	if err != nil {
 		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, err)
 		return

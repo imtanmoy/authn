@@ -27,6 +27,10 @@ func (u *useCase) FindAll(ctx context.Context) ([]*models.Organization, error) {
 	return u.orgRepo.FindAll(ctx)
 }
 
+func (u *useCase) FindAllByUserId(ctx context.Context, id int) ([]*models.Organization, error) {
+	return u.orgRepo.FindAllByUserId(ctx, id)
+}
+
 func (u *useCase) Store(ctx context.Context, org *models.Organization, user *models.User) error {
 	err := u.orgRepo.Save(ctx, org)
 	if err != nil {

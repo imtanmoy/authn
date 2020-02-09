@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 
 	"github.com/go-pg/pg/v9"
@@ -18,7 +19,7 @@ func (d dbLogger) BeforeQuery(c context.Context, q *pg.QueryEvent) (context.Cont
 }
 
 func (d dbLogger) AfterQuery(c context.Context, q *pg.QueryEvent) error {
-	//fmt.Println(q.FormattedQuery())
+	fmt.Println(q.FormattedQuery())
 	return nil
 }
 

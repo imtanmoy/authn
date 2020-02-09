@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/go-pg/pg/v9"
+	"github.com/go-pg/pg/v9/orm"
 	"github.com/imtanmoy/authn/models"
 	"github.com/imtanmoy/authn/organization"
 	"github.com/imtanmoy/godbx"
@@ -11,6 +12,23 @@ import (
 
 type repository struct {
 	db *pg.DB
+}
+
+func (r *repository) FindAllByUserId(ctx context.Context, id int) ([]*models.Organization, error) {
+	db := r.db.WithContext(ctx)
+	var orgs []*models.Organization
+	err := db.Model(&orgs).Relation("Users", func(q *orm.Query) (*orm.Query, error) {
+		return q.Where("user_id = ?", id), nil
+	}).Select()
+	if err != nil {
+		if errors.Is(err, pg.ErrNoRows) {
+			orgs = make([]*models.Organization, 0)
+			return orgs, nil
+		} else {
+			panic(err)
+		}
+	}
+	return orgs, nil
 }
 
 func (r *repository) FindAllUserOrganizationByOid(ctx context.Context, id int) ([]*models.UserOrganization, error) {
