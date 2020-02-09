@@ -9,7 +9,7 @@ func init() {
 }
 
 type UserOrganization struct {
-	tableName struct{} `pg:"user_organization"`
+	tableName struct{} `pg:"users_organizations"`
 
 	UserId         int `pg:"user_id,notnull,pk"`
 	User           *User

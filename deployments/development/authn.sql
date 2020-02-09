@@ -27,19 +27,19 @@ ALTER TABLE users
 
 
 -- user_organization start
-CREATE TABLE user_organization
+CREATE TABLE users_organizations
 (
     user_id         BIGINT NOT NULL,
     organization_id BIGINT NOT NULL
 );
 
-ALTER TABLE user_organization
-    ADD CONSTRAINT fk_user_organization_users
+ALTER TABLE users_organizations
+    ADD CONSTRAINT fk_users_organizations_users
         FOREIGN KEY (user_id)
             REFERENCES users (id);
 
-ALTER TABLE user_organization
-    ADD CONSTRAINT fk_user_organization_organizations
+ALTER TABLE users_organizations
+    ADD CONSTRAINT fk_users_organizations_organizations
         FOREIGN KEY (organization_id)
             REFERENCES organizations (id);
 

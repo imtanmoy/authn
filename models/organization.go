@@ -12,7 +12,7 @@ type Organization struct {
 	Name      string    `pg:"name,notnull"`
 	CreatedAt time.Time `pg:"created_at,notnull,default:now()"`
 	UpdatedAt time.Time `pg:"updated_at,notnull,default:now()"`
-	Users     []*User   `pg:"many2many:user_organization"`
+	Users     []*User   `pg:"many2many:users_organizations"`
 }
 
 var _ orm.BeforeInsertHook = (*Organization)(nil)
