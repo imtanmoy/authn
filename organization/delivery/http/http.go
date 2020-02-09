@@ -40,6 +40,30 @@ func (o *organizationPayload) validate() url.Values {
 	return e
 }
 
+type OrganizationResponse struct {
+	ID   int    `json:"id"`
+	Name string `json:"name"`
+}
+
+func NewOrganizationResponse(organization *models.Organization) *OrganizationResponse {
+	resp := &OrganizationResponse{
+		ID:   organization.ID,
+		Name: organization.Name,
+	}
+	return resp
+}
+
+func NewOrganizationListResponse(organizations []*models.Organization) []*OrganizationResponse {
+	var list []*OrganizationResponse
+	if len(organizations) == 0 {
+		list = make([]*OrganizationResponse, 0)
+	}
+	for _, org := range organizations {
+		list = append(list, NewOrganizationResponse(org))
+	}
+	return list
+}
+
 // OrganizationHandler  represent the http handler for organization
 type OrganizationHandler struct {
 	useCase organization.UseCase
@@ -127,7 +151,7 @@ func (handler *OrganizationHandler) List(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	httpx.ResponseJSON(w, http.StatusOK, models.NewOrganizationListResponse(organizations))
+	httpx.ResponseJSON(w, http.StatusOK, NewOrganizationListResponse(organizations))
 	return
 }
 
@@ -167,7 +191,7 @@ func (handler *OrganizationHandler) Create(w http.ResponseWriter, r *http.Reques
 		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, err)
 		return
 	}
-	httpx.ResponseJSON(w, http.StatusCreated, models.NewOrganizationResponse(&org))
+	httpx.ResponseJSON(w, http.StatusCreated, NewOrganizationResponse(&org))
 	return
 }
 
@@ -177,7 +201,7 @@ func (handler *OrganizationHandler) Get(w http.ResponseWriter, r *http.Request) 
 	if !ok {
 		panic(fmt.Sprintf("could not get organization, type: %T", org))
 	}
-	httpx.ResponseJSON(w, http.StatusOK, models.NewOrganizationResponse(org))
+	httpx.ResponseJSON(w, http.StatusOK, NewOrganizationResponse(org))
 	return
 }
 
@@ -206,7 +230,7 @@ func (handler *OrganizationHandler) Update(w http.ResponseWriter, r *http.Reques
 		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, err)
 		return
 	}
-	httpx.ResponseJSON(w, http.StatusOK, models.NewOrganizationResponse(org))
+	httpx.ResponseJSON(w, http.StatusOK, NewOrganizationResponse(org))
 	return
 }
 

@@ -57,29 +57,3 @@ var _ orm.BeforeInsertHook = (*User)(nil)
 var _ orm.BeforeUpdateHook = (*User)(nil)
 var _ authx.AuthableUser = (*User)(nil)
 var _ authx.AuthUser = (*User)(nil)
-
-type UserResponse struct {
-	ID    int    `json:"id"`
-	Name  string `json:"name"`
-	Email string `json:"email"`
-}
-
-func NewUserResponse(u *User) *UserResponse {
-	resp := &UserResponse{
-		ID:    u.ID,
-		Name:  u.Name,
-		Email: u.Email,
-	}
-	return resp
-}
-
-func NewUserListResponse(users []*User) []*UserResponse {
-	var list []*UserResponse
-	if len(users) == 0 {
-		list = make([]*UserResponse, 0)
-	}
-	for _, u := range users {
-		list = append(list, NewUserResponse(u))
-	}
-	return list
-}

@@ -69,6 +69,21 @@ func (sp *signupPayload) validate() url.Values {
 	return e
 }
 
+type UserResponse struct {
+	ID    int    `json:"id"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
+}
+
+func NewUserResponse(u *models.User) *UserResponse {
+	resp := &UserResponse{
+		ID:    u.ID,
+		Name:  u.Name,
+		Email: u.Email,
+	}
+	return resp
+}
+
 // AuthHandler  represent the http handler for auth
 type AuthHandler struct {
 	useCase       auth.UseCase
@@ -140,7 +155,7 @@ func (handler *AuthHandler) GetMe(w http.ResponseWriter, r *http.Request) {
 	if err != nil || !ok {
 		panic(fmt.Sprintf("could not upgrade user to an authable user, type: %T", u))
 	}
-	httpx.ResponseJSON(w, http.StatusOK, models.NewUserResponse(us))
+	httpx.ResponseJSON(w, http.StatusOK, NewUserResponse(us))
 	return
 }
 
@@ -204,7 +219,7 @@ func (handler *AuthHandler) SignUp(w http.ResponseWriter, r *http.Request) {
 
 	err = handler.inviteUseCase.Update(ctx, tokenUser)
 	// TODO handle error
-	httpx.ResponseJSON(w, http.StatusCreated, models.NewUserResponse(&u))
+	httpx.ResponseJSON(w, http.StatusCreated, NewUserResponse(&u))
 	return
 }
 

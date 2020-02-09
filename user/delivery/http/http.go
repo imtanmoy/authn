@@ -84,6 +84,32 @@ func (u *userUpdatePayload) validate() url.Values {
 	return e
 }
 
+type UserResponse struct {
+	ID    int    `json:"id"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
+}
+
+func NewUserResponse(u *models.User) *UserResponse {
+	resp := &UserResponse{
+		ID:    u.ID,
+		Name:  u.Name,
+		Email: u.Email,
+	}
+	return resp
+}
+
+func NewUserListResponse(users []*models.User) []*UserResponse {
+	var list []*UserResponse
+	if len(users) == 0 {
+		list = make([]*UserResponse, 0)
+	}
+	for _, u := range users {
+		list = append(list, NewUserResponse(u))
+	}
+	return list
+}
+
 // UserHandler  represent the http handler for user
 type UserHandler struct {
 	useCase user.UseCase
@@ -145,7 +171,7 @@ func (uh *UserHandler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	httpx.ResponseJSON(w, http.StatusOK, models.NewUserListResponse(users))
+	httpx.ResponseJSON(w, http.StatusOK, NewUserListResponse(users))
 	return
 }
 
@@ -188,7 +214,7 @@ func (uh *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, err)
 		return
 	}
-	httpx.ResponseJSON(w, http.StatusCreated, models.NewUserResponse(&u))
+	httpx.ResponseJSON(w, http.StatusCreated, NewUserResponse(&u))
 	return
 }
 
@@ -199,7 +225,7 @@ func (uh *UserHandler) Get(w http.ResponseWriter, r *http.Request) {
 		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, httpx.ErrInternalServerError)
 		return
 	}
-	httpx.ResponseJSON(w, http.StatusOK, models.NewUserResponse(u))
+	httpx.ResponseJSON(w, http.StatusOK, NewUserResponse(u))
 	return
 }
 
@@ -243,7 +269,7 @@ func (uh *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
 		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, "could not update user, try again", err)
 		return
 	}
-	httpx.ResponseJSON(w, http.StatusCreated, models.NewUserResponse(u))
+	httpx.ResponseJSON(w, http.StatusCreated, NewUserResponse(u))
 	return
 }
 
