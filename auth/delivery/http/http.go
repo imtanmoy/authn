@@ -69,6 +69,36 @@ func (sp *signupPayload) validate() url.Values {
 	return e
 }
 
+type registerPayload struct {
+	Name            string `json:"name"`
+	Email           string `json:"email"`
+	Password        string `json:"password"`
+	ConfirmPassword string `json:"confirm_password"`
+}
+
+func (rp *registerPayload) validate() url.Values {
+	rules := govalidator.MapData{
+		"name":             []string{"required", "min:4", "max:100"},
+		"email":            []string{"required", "min:4", "max:100", "email"},
+		"password":         []string{"required", "min:8", "max:20"},
+		"confirm_password": []string{"required", "min:8", "max:20"},
+	}
+	opts := govalidator.Options{
+		Data:  rp,
+		Rules: rules,
+	}
+
+	v := govalidator.New(opts)
+	e := v.ValidateStruct()
+	if rp.Password != "" && rp.ConfirmPassword != "" {
+		if rp.Password != rp.ConfirmPassword {
+			e.Add("password", "password and confirmation password do not match")
+			e.Add("confirm_password", "password and confirmation password do not match")
+		}
+	}
+	return e
+}
+
 type UserResponse struct {
 	ID    int    `json:"id"`
 	Name  string `json:"name"`
@@ -224,6 +254,52 @@ func (handler *AuthHandler) SignUp(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
+func (handler *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	data := &registerPayload{}
+	if err := httpx.DecodeJSON(r, data); err != nil {
+		var mr *httpx.MalformedRequest
+		if errors.As(err, &mr) {
+			httpx.ResponseJSONError(w, r, mr.Status, mr.Status, mr.Msg)
+		} else {
+			httpx.ResponseJSONError(w, r, http.StatusInternalServerError, err)
+		}
+		return
+	}
+
+	validationErrors := data.validate()
+
+	if handler.userUseCase.ExistsByEmail(ctx, data.Email) {
+		validationErrors.Add("email", "user with this email already exists")
+	}
+
+	if len(validationErrors) > 0 {
+		httpx.ResponseJSONError(w, r, 400, "invalid request", validationErrors)
+		return
+	}
+	hashedPassword, err := handler.HashPassword(data.Password)
+	if err != nil {
+		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, "could not create user, try again")
+		return
+	}
+
+	var u models.User
+	u.Name = data.Name
+	u.Email = data.Email
+	u.Password = hashedPassword
+
+	err = handler.userUseCase.Store(ctx, &u)
+	if err != nil {
+		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, err)
+		return
+	}
+	httpx.ResponseJSON(w, http.StatusCreated, NewUserResponse(&u))
+	return
+}
+
 // NewHandler will initialize the user's resources endpoint
 func NewHandler(r *chi.Mux, useCase auth.UseCase, userUseCase user.UseCase, inviteUseCase invite.UseCase, aux *authx.Authx) {
 	handler := &AuthHandler{
@@ -235,6 +311,7 @@ func NewHandler(r *chi.Mux, useCase auth.UseCase, userUseCase user.UseCase, invi
 	r.Route("/", func(r chi.Router) {
 		r.Post("/login", handler.Login)
 		r.Post("/signup", handler.SignUp)
+		r.Post("/register", handler.Register)
 		r.Group(func(r chi.Router) {
 			r.Use(handler.AuthMiddleware)
 			r.Post("/logout", handler.Logout)
