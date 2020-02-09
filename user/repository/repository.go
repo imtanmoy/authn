@@ -62,15 +62,40 @@ func (repo *repository) Find(ctx context.Context, id int) (*models.User, error) 
 	db := repo.db.WithContext(ctx)
 	var u models.User
 	err := db.Model(&u).Where("id = ?", id).Select()
-	err = godbx.ParsePgError(err)
+	if err != nil {
+		if errors.Is(err, pg.ErrNoRows) {
+			return nil, errorx.ErrorNotFound
+		} else {
+			panic(err)
+		}
+	}
 	return &u, err
 }
 
 func (repo *repository) FindByEmail(ctx context.Context, email string) (*models.User, error) {
 	db := repo.db.WithContext(ctx)
 	var u models.User
-	err := db.Model(&u).Where("email = ?", email).Relation("Organizations").Select()
-	err = godbx.ParsePgError(err)
+	//_, err := db.Query(&u, `
+	//							SELECT "user"."id",
+	//								   "user"."name",
+	//								   "user"."email",
+	//								   "user"."created_at",
+	//								   "user"."updated_at",
+	//								   "user"."deleted_at"
+	//							FROM "users" AS "user"
+	//									 LEFT OUTER JOIN users_organizations AS user_organization ON "user".id = user_organization.user_id
+	//									 LEFT OUTER JOIN organizations organization on user_organization.organization_id = organization.id
+	//							WHERE "user".email = "jjsj"
+	//							  AND "user"."deleted_at" IS NULL`,
+	//	email)
+	err := db.Model(&u).ExcludeColumn("password").Where("email = ?", email).Relation("Organizations").Select()
+	if err != nil {
+		if errors.Is(err, pg.ErrNoRows) {
+			return nil, errorx.ErrorNotFound
+		} else {
+			panic(err)
+		}
+	}
 	return &u, err
 }
 

@@ -90,9 +90,6 @@ func (ax *Authx) AuthMiddleware(next http.Handler) http.Handler {
 }
 
 func (ax *Authx) getUser(ctx context.Context, identity string) (AuthUser, error) {
-	if !ax.userRepo.ExistsByEmail(ctx, identity) {
-		return nil, errorx.ErrorNotFound
-	}
 	u, err := ax.userRepo.GetByEmail(ctx, identity)
 	if err != nil {
 		return nil, err
