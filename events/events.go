@@ -19,19 +19,27 @@ type Event interface {
 	Init()
 	Close()
 	Emit(ctx context.Context, eventName string, data interface{})
+	EmitWithDelay(ctx context.Context, eventName string, data interface{})
+}
+
+type EventData struct {
+	Data    interface{}
+	Delayed bool
 }
 
 type event struct {
 	ctx  context.Context
-	b    *bus.Bus
+	b1   *bus.Bus
+	b2   *bus.Bus
 	quit chan bool
 }
 
 var _ Event = (*event)(nil)
 
 func New() Event {
-	b := newBus()
-	return &event{b: b, quit: make(chan bool)}
+	b1 := newBus()
+	b2 := newBus()
+	return &event{b1: b1, b2: b2, quit: make(chan bool)}
 }
 
 func (event *event) Init() {
@@ -45,18 +53,24 @@ func (event *event) Init() {
 	dispatcher := worker.NewDispatcher()
 	dispatcher.Run(event.ctx)
 
-	event.b.RegisterTopics(UserCreateEvent, UserUpdateEvent)
-	userCreateHandler := bus.Handler{Handle: func(e *bus.Event) {
-		_userEventHandler.EventHandler(e, dispatcher.Send)
-	}, Matcher: "^user.(created|updated)$"}
-	event.b.RegisterHandler(UserCreateEvent, &userCreateHandler)
+	event.b1.RegisterTopics(UserCreateEvent, UserUpdateEvent)
+	event.b2.RegisterTopics(UserCreateEvent, UserUpdateEvent)
+	event.b1.RegisterHandler("user_event_1", _userEventHandler.EventHandler(dispatcher.Send, false))
+	event.b2.RegisterHandler("user_event_2", _userEventHandler.EventHandler(dispatcher.Send, true))
 }
 func (event *event) Close() {
 	event.quit <- true
 }
 
 func (event *event) Emit(ctx context.Context, eventName string, data interface{}) {
-	_, err := event.b.Emit(ctx, eventName, data)
+	_, err := event.b1.Emit(ctx, eventName, data)
+	if err != nil {
+		fmt.Println(err)
+	}
+}
+
+func (event *event) EmitWithDelay(ctx context.Context, eventName string, data interface{}) {
+	_, err := event.b2.Emit(ctx, eventName, data)
 	if err != nil {
 		fmt.Println(err)
 	}

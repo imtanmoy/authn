@@ -10,13 +10,14 @@ type Dispatcher struct {
 	maxWorkers int
 	workerPool chan chan Job
 	jobQueue   chan Job
+	quit       chan bool
 }
 
 func NewDispatcher() *Dispatcher {
 	processors := runtime.GOMAXPROCS(0)
 	pool := make(chan chan Job, processors)
 	jq := make(chan Job)
-	return &Dispatcher{workerPool: pool, maxWorkers: processors, jobQueue: jq}
+	return &Dispatcher{workerPool: pool, maxWorkers: processors, jobQueue: jq, quit: make(chan bool)}
 }
 
 func (d *Dispatcher) Run(ctx context.Context) {
@@ -44,11 +45,16 @@ func (d *Dispatcher) dispatch(ctx context.Context) {
 				jobChannel <- job
 			}(job)
 		case <-ctx.Done():
+		case <-d.quit:
 			logx.Info("closing dispatcher")
 			return
-
 		}
 	}
+}
+
+// Stop signals the worker to stop listening for work requests.
+func (d *Dispatcher) Stop() {
+	d.quit <- true
 }
 
 func (d *Dispatcher) Send(fn func()) {
