@@ -5,6 +5,7 @@ import (
 	_authUseCase "github.com/imtanmoy/authn/auth/usecase"
 	"github.com/imtanmoy/authn/config"
 	"github.com/imtanmoy/authn/db"
+	"github.com/imtanmoy/authn/events"
 	"github.com/imtanmoy/authn/internal/authx"
 	_invitationDeliveryHttp "github.com/imtanmoy/authn/invitation/delivery/http"
 	_inviteRepo "github.com/imtanmoy/authn/invitation/repository"
@@ -22,7 +23,7 @@ import (
 )
 
 // New configures application resources and routes.
-func New() (*chi.Mux, error) {
+func New(b events.Event) (*chi.Mux, error) {
 
 	r := chi.NewRouter()
 	r.Use(_chiMiddleware.Recoverer)
@@ -55,7 +56,7 @@ func New() (*chi.Mux, error) {
 
 	_orgDeliveryHttp.NewHandler(r, orgUseCase, au)
 	_userDeliveryHttp.NewHandler(r, userUseCase, orgUseCase, au)
-	_authDeliveryHttp.NewHandler(r, authUseCase, userUseCase, au)
+	_authDeliveryHttp.NewHandler(r, authUseCase, userUseCase, au, b)
 	_invitationDeliveryHttp.NewHandler(r, invitationUseCase, userUseCase, orgUseCase, au)
 
 	return r, nil

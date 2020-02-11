@@ -12,6 +12,8 @@ require (
 	github.com/imtanmoy/godbx v0.0.1
 	github.com/imtanmoy/httpx v0.0.3
 	github.com/imtanmoy/logx v0.0.3
+	github.com/mustafaturan/bus v1.0.2
+	github.com/mustafaturan/monoton v1.0.0
 	github.com/oceanicdev/chi-param v1.1.0
 	github.com/pelletier/go-toml v1.6.0 // indirect
 	github.com/spf13/afero v1.2.2 // indirect

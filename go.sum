@@ -105,6 +105,11 @@ github.com/matttproud/golang_protobuf_extensions v1.0.1/go.mod h1:D8He9yQNgCq6Z5
 github.com/mitchellh/go-homedir v1.1.0/go.mod h1:SfyaCUpYCn1Vlf4IUYiD9fPX4A5wJrkLzIz1N1q0pr0=
 github.com/mitchellh/mapstructure v1.1.2 h1:fmNYVwqnSfB9mZU6OS2O6GsXM+wcskZDuKQzvN1EDeE=
 github.com/mitchellh/mapstructure v1.1.2/go.mod h1:FVVH3fgwuzCH5S8UJGiWEs2h04kUh9fWfEaFds41c1Y=
+github.com/mustafaturan/bus v1.0.2 h1:2x3ErwZ0uUPwwZ5ZZoknEQprdaxr68Yl3mY8jDye1Ws=
+github.com/mustafaturan/bus v1.0.2/go.mod h1:h7gfehm8TThv4Dcaa+wDQG7r7j6p74v+7ftr0Rq9i1Q=
+github.com/mustafaturan/monoton v0.3.1/go.mod h1:FOnE7NV3s3EWPXb8/7+/OSdiMBbdlkV0Lz8p1dc+vy8=
+github.com/mustafaturan/monoton v1.0.0 h1:8SCej+JiNn0lyps7V+Jzc1CRAkDR4EZPWrTupQ61YCQ=
+github.com/mustafaturan/monoton v1.0.0/go.mod h1:FOnE7NV3s3EWPXb8/7+/OSdiMBbdlkV0Lz8p1dc+vy8=
 github.com/mwitkow/go-conntrack v0.0.0-20161129095857-cc309e4a2223/go.mod h1:qRWi+5nqEBWmkhHvq77mSJWrCKwh8bxhgT7d/eI7P4U=
 github.com/oceanicdev/chi-param v1.1.0 h1:BOsg9uae20A7fGUx4L1UNfv7Jca4Wli9M9F1dtHkwVo=
 github.com/oceanicdev/chi-param v1.1.0/go.mod h1:qNIigAou22uG1ZOijrRg0IqWea5hha63msPqA27gAzw=

@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"github.com/imtanmoy/authn/events"
 	"net/http"
 	"strconv"
 	"time"
@@ -14,12 +15,16 @@ import (
 // Server provides an http.Server.
 type Server struct {
 	*http.Server
+	bus events.Event
 }
 
 // NewServer creates and configures an APIServer serving all application routes.
 func NewServer() (*Server, error) {
 	logx.Info("configuring server...")
-	handler, err := New()
+	logx.Info("configuring Bus...")
+	bus := events.New()
+	bus.Init()
+	handler, err := New(bus)
 	if err != nil {
 		return nil, err
 	}
@@ -36,7 +41,7 @@ func NewServer() (*Server, error) {
 		IdleTimeout:  15 * time.Second,
 	}
 
-	return &Server{&srv}, nil
+	return &Server{&srv, bus}, nil
 }
 
 // Run runs ListenAndServe on the http.Server with graceful shutdown.
@@ -55,6 +60,7 @@ func (srv *Server) Run(ctx context.Context) (err error) {
 	defer func() {
 		cancel()
 	}()
+	srv.bus.Close()
 	srv.SetKeepAlivesEnabled(false)
 	if err = srv.Shutdown(ctxShutDown); err != nil {
 		logx.Fatalf("server Shutdown Failed:%+s", err)

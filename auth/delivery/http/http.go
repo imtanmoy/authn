@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/go-chi/chi"
 	"github.com/imtanmoy/authn/auth"
+	"github.com/imtanmoy/authn/events"
 	"github.com/imtanmoy/authn/internal/authx"
 	"github.com/imtanmoy/authn/internal/errorx"
 	"github.com/imtanmoy/authn/models"
@@ -86,6 +87,7 @@ type AuthHandler struct {
 	useCase     auth.UseCase
 	userUseCase user.UseCase
 	*authx.Authx
+	event events.Event
 }
 
 func (handler *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
@@ -198,16 +200,19 @@ func (handler *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, err)
 		return
 	}
+	handler.event.Emit(ctx, events.UserCreateEvent, u)
+
 	httpx.ResponseJSON(w, http.StatusCreated, NewUserResponse(&u))
 	return
 }
 
 // NewHandler will initialize the user's resources endpoint
-func NewHandler(r *chi.Mux, useCase auth.UseCase, userUseCase user.UseCase, aux *authx.Authx) {
+func NewHandler(r *chi.Mux, useCase auth.UseCase, userUseCase user.UseCase, aux *authx.Authx, event events.Event) {
 	handler := &AuthHandler{
 		useCase:     useCase,
 		userUseCase: userUseCase,
 		Authx:       aux,
+		event:       event,
 	}
 	r.Route("/", func(r chi.Router) {
 		r.Post("/login", handler.Login)
