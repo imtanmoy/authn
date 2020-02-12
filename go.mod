@@ -4,6 +4,7 @@ go 1.13
 
 require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
+	github.com/gammazero/workerpool v0.0.0-20200206003619-019d125201ab
 	github.com/go-chi/chi v4.0.2+incompatible
 	github.com/go-pg/pg/v9 v9.1.0
 	github.com/go-pg/urlstruct v0.2.9 // indirect

@@ -3,8 +3,8 @@ package events
 import (
 	"context"
 	"fmt"
+	"github.com/gammazero/workerpool"
 	_userEventHandler "github.com/imtanmoy/authn/events/handlers/user"
-	"github.com/imtanmoy/authn/events/worker"
 	"github.com/mustafaturan/bus"
 	"github.com/mustafaturan/monoton"
 	"github.com/mustafaturan/monoton/sequencer"
@@ -32,10 +32,9 @@ type EventData struct {
 }
 
 type event struct {
-	ctx           context.Context
 	nonDelayedBus *bus.Bus
 	delayedBus    *bus.Bus
-	quit          chan bool
+	wp            *workerpool.WorkerPool
 }
 
 var _ Event = (*event)(nil)
@@ -43,27 +42,18 @@ var _ Event = (*event)(nil)
 func New() Event {
 	nonDelayedBus := newBus()
 	delayedBus := newBus()
-	return &event{nonDelayedBus: nonDelayedBus, delayedBus: delayedBus, quit: make(chan bool)}
+	return &event{nonDelayedBus: nonDelayedBus, delayedBus: delayedBus}
 }
 
 func (event *event) Init() {
-	ctx, cancel := context.WithCancel(context.Background())
-	event.ctx = ctx
-	go func() {
-		<-event.quit
-		cancel()
-	}()
-
-	dispatcher := worker.NewDispatcher()
-	dispatcher.Run(event.ctx)
-
+	event.wp = workerpool.New(2)
 	event.nonDelayedBus.RegisterTopics(UserCreateEvent, UserUpdateEvent)
 	event.delayedBus.RegisterTopics(UserCreateEvent, UserUpdateEvent)
-	event.nonDelayedBus.RegisterHandler("user_event_1", _userEventHandler.EventHandler(dispatcher.Send, false))
-	event.delayedBus.RegisterHandler("user_event_2", _userEventHandler.EventHandler(dispatcher.Send, true))
+	event.nonDelayedBus.RegisterHandler("user_event_non_delayed", _userEventHandler.EventHandler(event.wp.Submit, false))
+	event.delayedBus.RegisterHandler("user_event_delayed", _userEventHandler.EventHandler(event.wp.Submit, true))
 }
 func (event *event) Close() {
-	event.quit <- true
+	event.wp.StopWait()
 }
 
 func (event *event) Emit(ctx context.Context, eventName string, data interface{}) {

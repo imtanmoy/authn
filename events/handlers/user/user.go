@@ -34,7 +34,7 @@ func createEventHandler(data interface{}) func() {
 	}
 
 	fn := func() {
-		time.Sleep(5 * time.Second)
+		time.Sleep(15 * time.Second)
 		logx.Infof("new user registered: %s", u.Email)
 	}
 	return fn
