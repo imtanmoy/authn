@@ -87,7 +87,7 @@ type AuthHandler struct {
 	useCase     auth.UseCase
 	userUseCase user.UseCase
 	*authx.Authx
-	event events.Event
+	event events.EventEmitter
 }
 
 func (handler *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
@@ -200,14 +200,14 @@ func (handler *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, err)
 		return
 	}
-	handler.event.Emit(ctx, events.UserCreateEvent, u)
+	handler.event.EmitWithDelay(ctx, events.UserCreateEvent, u)
 
 	httpx.ResponseJSON(w, http.StatusCreated, NewUserResponse(&u))
 	return
 }
 
 // NewHandler will initialize the user's resources endpoint
-func NewHandler(r *chi.Mux, useCase auth.UseCase, userUseCase user.UseCase, aux *authx.Authx, event events.Event) {
+func NewHandler(r *chi.Mux, useCase auth.UseCase, userUseCase user.UseCase, aux *authx.Authx, event events.EventEmitter) {
 	handler := &AuthHandler{
 		useCase:     useCase,
 		userUseCase: userUseCase,

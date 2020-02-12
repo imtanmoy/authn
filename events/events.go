@@ -15,11 +15,15 @@ const (
 	UserUpdateEvent = "user:updated"
 )
 
+type EventEmitter interface {
+	Emit(ctx context.Context, eventName string, data interface{})
+	EmitWithDelay(ctx context.Context, eventName string, data interface{})
+}
+
 type Event interface {
 	Init()
 	Close()
-	Emit(ctx context.Context, eventName string, data interface{})
-	EmitWithDelay(ctx context.Context, eventName string, data interface{})
+	EventEmitter
 }
 
 type EventData struct {
@@ -28,18 +32,18 @@ type EventData struct {
 }
 
 type event struct {
-	ctx  context.Context
-	b1   *bus.Bus
-	b2   *bus.Bus
-	quit chan bool
+	ctx           context.Context
+	nonDelayedBus *bus.Bus
+	delayedBus    *bus.Bus
+	quit          chan bool
 }
 
 var _ Event = (*event)(nil)
 
 func New() Event {
-	b1 := newBus()
-	b2 := newBus()
-	return &event{b1: b1, b2: b2, quit: make(chan bool)}
+	nonDelayedBus := newBus()
+	delayedBus := newBus()
+	return &event{nonDelayedBus: nonDelayedBus, delayedBus: delayedBus, quit: make(chan bool)}
 }
 
 func (event *event) Init() {
@@ -53,24 +57,24 @@ func (event *event) Init() {
 	dispatcher := worker.NewDispatcher()
 	dispatcher.Run(event.ctx)
 
-	event.b1.RegisterTopics(UserCreateEvent, UserUpdateEvent)
-	event.b2.RegisterTopics(UserCreateEvent, UserUpdateEvent)
-	event.b1.RegisterHandler("user_event_1", _userEventHandler.EventHandler(dispatcher.Send, false))
-	event.b2.RegisterHandler("user_event_2", _userEventHandler.EventHandler(dispatcher.Send, true))
+	event.nonDelayedBus.RegisterTopics(UserCreateEvent, UserUpdateEvent)
+	event.delayedBus.RegisterTopics(UserCreateEvent, UserUpdateEvent)
+	event.nonDelayedBus.RegisterHandler("user_event_1", _userEventHandler.EventHandler(dispatcher.Send, false))
+	event.delayedBus.RegisterHandler("user_event_2", _userEventHandler.EventHandler(dispatcher.Send, true))
 }
 func (event *event) Close() {
 	event.quit <- true
 }
 
 func (event *event) Emit(ctx context.Context, eventName string, data interface{}) {
-	_, err := event.b1.Emit(ctx, eventName, data)
+	_, err := event.nonDelayedBus.Emit(ctx, eventName, data)
 	if err != nil {
 		fmt.Println(err)
 	}
 }
 
 func (event *event) EmitWithDelay(ctx context.Context, eventName string, data interface{}) {
-	_, err := event.b2.Emit(ctx, eventName, data)
+	_, err := event.delayedBus.Emit(ctx, eventName, data)
 	if err != nil {
 		fmt.Println(err)
 	}
