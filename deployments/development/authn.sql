@@ -1,20 +1,3 @@
--- organizations start
-CREATE TABLE organizations
-(
-    id         BIGSERIAL PRIMARY KEY NOT NULL,
-    name       VARCHAR(100)          NOT NULL,
---     owner_id   BIGINT                NOT NULL,
-    created_at TIMESTAMP             NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP             NOT NULL DEFAULT NOW()
-);
-
--- ALTER TABLE organizations
---     ADD CONSTRAINT fk_organizations_owner
---         FOREIGN KEY (owner_id)
---             REFERENCES users (id);
-
--- organizations end
-
 -- users start
 CREATE TABLE users
 (
@@ -32,6 +15,22 @@ ALTER TABLE users
         UNIQUE (email, deleted_at);
 -- users end
 
+-- organizations start
+CREATE TABLE organizations
+(
+    id         BIGSERIAL PRIMARY KEY NOT NULL,
+    name       VARCHAR(100)          NOT NULL,
+    owner_id   BIGINT                NOT NULL,
+    created_at TIMESTAMP             NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP             NOT NULL DEFAULT NOW()
+);
+
+ALTER TABLE organizations
+    ADD CONSTRAINT fk_organizations_owner
+        FOREIGN KEY (owner_id)
+            REFERENCES users (id);
+
+-- organizations end
 
 -- user_organization start
 CREATE TABLE users_organizations

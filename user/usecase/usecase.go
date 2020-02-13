@@ -13,15 +13,14 @@ type useCase struct {
 	contextTimeout time.Duration
 }
 
-func (uc *useCase) StoreWithOrg(ctx context.Context, u *models.User, org *models.Organization) error {
+func (uc *useCase) StoreWithOrg(ctx context.Context, u *models.User, ou *models.UserOrganization) error {
 	err := uc.userRepo.Save(ctx, u)
 	if err != nil {
 		return err
 	}
-	var ou models.UserOrganization
+
 	ou.UserId = u.ID
-	ou.OrganizationId = org.ID
-	err = uc.userRepo.SaveUserOrganization(ctx, &ou)
+	err = uc.userRepo.SaveUserOrganization(ctx, ou)
 	return err
 }
 

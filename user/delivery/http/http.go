@@ -236,7 +236,12 @@ func (handler *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 	u.Email = data.Email
 	u.Password = hashedPassword
 
-	err = handler.useCase.StoreWithOrg(ctx, &u, org)
+	var ou models.UserOrganization
+	ou.UserId = u.ID
+	ou.OrganizationId = org.ID
+	ou.CreatedBy = currentUser.ID
+
+	err = handler.useCase.StoreWithOrg(ctx, &u, &ou)
 	if err != nil {
 		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, err)
 		return

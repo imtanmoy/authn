@@ -161,7 +161,12 @@ func (handler *InvitationHandler) Accept(w http.ResponseWriter, r *http.Request)
 	u.Email = tokenUser.Email
 	u.Password = hashedPassword
 
-	err = handler.userUseCase.StoreWithOrg(ctx, &u, org)
+	var ou models.UserOrganization
+	ou.UserId = u.ID
+	ou.OrganizationId = org.ID
+	ou.CreatedBy = tokenUser.InvitedBy
+
+	err = handler.userUseCase.StoreWithOrg(ctx, &u, &ou)
 	if err != nil {
 		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, err)
 		return

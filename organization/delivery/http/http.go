@@ -176,6 +176,7 @@ func (handler *OrganizationHandler) Create(w http.ResponseWriter, r *http.Reques
 
 	var org models.Organization
 	org.Name = data.Name
+	org.OwnerId = currentUser.ID
 
 	err = handler.useCase.Store(ctx, &org, currentUser)
 	if err != nil {

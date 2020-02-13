@@ -8,12 +8,13 @@ import (
 
 // Organization represent organizations table
 type Organization struct {
-	ID   int    `pg:"id,notnull,unique,pk"`
-	Name string `pg:"name,notnull"`
-	//OwnerId   int       `pg:"owner_id,notnull"`
+	ID        int       `pg:"id,notnull,unique,pk"`
+	Name      string    `pg:"name,notnull"`
+	OwnerId   int       `pg:"owner_id,notnull"`
 	CreatedAt time.Time `pg:"created_at,notnull,default:now()"`
 	UpdatedAt time.Time `pg:"updated_at,notnull,default:now()"`
 	Users     []*User   `pg:"many2many:users_organizations"`
+	Owner     *User
 }
 
 var _ orm.BeforeInsertHook = (*Organization)(nil)

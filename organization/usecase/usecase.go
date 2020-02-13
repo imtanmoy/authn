@@ -40,6 +40,7 @@ func (u *useCase) Store(ctx context.Context, org *models.Organization, user *mod
 	ou.UserId = user.ID
 	ou.OrganizationId = org.ID
 	ou.JoinedAt = time.Now()
+	ou.CreatedBy = user.ID
 	err = u.orgRepo.SaveUserOrganization(ctx, &ou)
 	return err
 }
