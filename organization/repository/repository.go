@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/go-pg/pg/v9"
+	"github.com/imtanmoy/authn/internal/errorx"
 	"github.com/imtanmoy/authn/models"
 	"github.com/imtanmoy/authn/organization"
 	"github.com/imtanmoy/godbx"
@@ -13,15 +14,25 @@ type repository struct {
 	db *pg.DB
 }
 
-func (r *repository) FindAllByUserId(ctx context.Context, id int) ([]*models.Membership, error) {
-	db := r.db.WithContext(ctx)
+func (repo *repository) FindAllByUserId(ctx context.Context, id int) ([]*models.Membership, error) {
+	db := repo.db.WithContext(ctx)
 
 	var orgs []*models.Membership
-	_, err := db.Query(&orgs, `SELECT "organization".*, "user_org".*
-								FROM "organizations" organization
-										 JOIN users_organizations user_org ON user_org.organization_id = organization.id
-										 JOIN users u on "user_org".user_id = u.id
-								WHERE u.id = ?`, id)
+	_, err := db.Query(&orgs, `SELECT 
+											"organization".id,
+										    "organization".name,
+											"organization".owner_id,
+										    "organization".created_at,
+										    "organization".updated_at,
+										    "user_org".joined_at,
+										    "user_org".created_by,
+										    "user_org".updated_by,
+										    "user_org".deleted_by,
+										    "user_org".enabled
+									FROM "organizations" "organization"
+											 JOIN users_organizations "user_org" ON user_org.organization_id = "organization".id
+											 JOIN users "u" on "user_org".user_id = "u".id
+									WHERE "u".id = ?`, id)
 	if err != nil {
 		if errors.Is(err, pg.ErrNoRows) {
 			orgs = make([]*models.Membership, 0)
@@ -33,8 +44,8 @@ func (r *repository) FindAllByUserId(ctx context.Context, id int) ([]*models.Mem
 	return orgs, nil
 }
 
-func (r *repository) FindAllUserOrganizationByOid(ctx context.Context, id int) ([]*models.UserOrganization, error) {
-	db := r.db.WithContext(ctx)
+func (repo *repository) FindAllUserOrganizationByOid(ctx context.Context, id int) ([]*models.UserOrganization, error) {
+	db := repo.db.WithContext(ctx)
 	var organizations []*models.UserOrganization
 	err := db.Model(&organizations).Where("organization_id = ?", id).Select()
 	return organizations, err
@@ -47,35 +58,35 @@ func NewRepository(db *pg.DB) organization.Repository {
 	return &repository{db}
 }
 
-func (r *repository) FindAll(ctx context.Context) ([]*models.Organization, error) {
-	db := r.db.WithContext(ctx)
+func (repo *repository) FindAll(ctx context.Context) ([]*models.Organization, error) {
+	db := repo.db.WithContext(ctx)
 	var organizations []*models.Organization
 	err := db.Model(&organizations).Select()
 	err = godbx.ParsePgError(err)
 	return organizations, err
 }
 
-func (r *repository) Save(ctx context.Context, org *models.Organization) error {
-	db := r.db.WithContext(ctx)
+func (repo *repository) Save(ctx context.Context, org *models.Organization) error {
+	db := repo.db.WithContext(ctx)
 	err := db.Insert(org)
 	return err
 }
 
-func (r *repository) SaveUserOrganization(ctx context.Context, orgUser *models.UserOrganization) error {
-	db := r.db.WithContext(ctx)
+func (repo *repository) SaveUserOrganization(ctx context.Context, orgUser *models.UserOrganization) error {
+	db := repo.db.WithContext(ctx)
 	err := db.Insert(orgUser)
 	return err
 }
 
-func (r *repository) Find(ctx context.Context, id int) (*models.Organization, error) {
-	db := r.db.WithContext(ctx)
+func (repo *repository) Find(ctx context.Context, id int) (*models.Organization, error) {
+	db := repo.db.WithContext(ctx)
 	var org models.Organization
 	err := db.Model(&org).Where("id = ?", id).Select()
 	return &org, err
 }
 
-func (r *repository) Exists(ctx context.Context, id int) bool {
-	db := r.db.WithContext(ctx)
+func (repo *repository) Exists(ctx context.Context, id int) bool {
+	db := repo.db.WithContext(ctx)
 	o := new(models.Organization)
 	err := db.Model(o).Where("id = ?", id).Select()
 	if err != nil {
@@ -88,14 +99,14 @@ func (r *repository) Exists(ctx context.Context, id int) bool {
 	return o.ID == id
 }
 
-func (r *repository) Delete(ctx context.Context, org *models.Organization) error {
-	db := r.db.WithContext(ctx)
+func (repo *repository) Delete(ctx context.Context, org *models.Organization) error {
+	db := repo.db.WithContext(ctx)
 	err := db.Delete(org)
 	return err
 }
 
-func (r *repository) DeleteUserOrganization(ctx context.Context, orgs []*models.UserOrganization) error {
-	db := r.db.WithContext(ctx)
+func (repo *repository) DeleteUserOrganization(ctx context.Context, orgs []*models.UserOrganization) error {
+	db := repo.db.WithContext(ctx)
 	for _, o := range orgs {
 		err := db.Delete(o)
 		return err
@@ -103,8 +114,55 @@ func (r *repository) DeleteUserOrganization(ctx context.Context, orgs []*models.
 	return nil
 }
 
-func (r *repository) Update(ctx context.Context, org *models.Organization) error {
-	db := r.db.WithContext(ctx)
+func (repo *repository) Update(ctx context.Context, org *models.Organization) error {
+	db := repo.db.WithContext(ctx)
 	err := db.Update(org)
 	return err
+}
+
+func (repo *repository) GetMembershipById(ctx context.Context, id, uid int) (*models.Membership, error) {
+	db := repo.db.WithContext(ctx)
+
+	var orgs []*models.Membership
+	//_, err := db.QueryOne(&org, `SELECT
+	//											"organization".id,
+	//										    "organization".name,
+	//										    "organization".created_at,
+	//										    "organization".updated_at,
+	//										    "user_org".joined_at,
+	//										    "user_org".created_by,
+	//										    "user_org".updated_by,
+	//										    "user_org".deleted_by,
+	//										    "user_org".enabled
+	//									FROM "organizations" "organization"
+	//											 JOIN users_organizations "user_org" ON "user_org".organization_id = "organization".id
+	//											 JOIN users "u" on "user_org".user_id = "u".id
+	//									WHERE "organization".id = ?
+	//									  AND "u".id = ?`, id, uid)
+	_, err := db.QueryOne(&orgs, `SELECT 
+											"organization".id,
+										    "organization".name,
+											"organization".owner_id,
+										    "organization".created_at,
+										    "organization".updated_at,
+										    "user_org".joined_at,
+										    "user_org".created_by,
+										    "user_org".updated_by,
+										    "user_org".deleted_by,
+										    "user_org".enabled
+									FROM "organizations" "organization"
+											 JOIN users_organizations "user_org" ON user_org.organization_id = "organization".id
+											 JOIN users "u" on "user_org".user_id = "u".id
+									WHERE "u".id = ? AND "organization".id = ? LIMIT 1`, uid, id)
+	if err != nil {
+		if errors.Is(err, pg.ErrNoRows) {
+			return nil, errorx.ErrorNotFound
+		} else {
+			panic(err)
+		}
+	}
+	if len(orgs) == 0 {
+		return nil, errorx.ErrorNotFound
+	}
+	return orgs[0], nil
 }

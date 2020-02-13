@@ -17,4 +17,7 @@ type Repository interface {
 
 	FindAllUserOrganizationByOid(ctx context.Context, id int) ([]*models.UserOrganization, error)
 	FindAllByUserId(ctx context.Context, id int) ([]*models.Membership, error)
+
+	// Membership
+	GetMembershipById(ctx context.Context, id, uid int) (*models.Membership, error)
 }

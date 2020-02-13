@@ -96,7 +96,14 @@ func (handler *OrganizationHandler) OrganizationCtx(next http.Handler) http.Hand
 			httpx.ResponseJSONError(w, r, http.StatusBadRequest, "Invalid request parameter", err)
 			return
 		}
-		org, err := handler.useCase.GetById(ctx, id)
+
+		u, err := handler.GetCurrentUser(r)
+		currentUser, ok := u.(*models.User)
+		if err != nil || !ok {
+			panic(fmt.Sprintf("could not upgrade user to an authable user, type: %T", u))
+		}
+
+		org, err := handler.useCase.GetMembershipById(ctx, id, currentUser.ID)
 		if err != nil {
 			if errors.Is(err, errorx.ErrorNotFound) {
 				httpx.ResponseJSONError(w, r, http.StatusNotFound, "organization not found", err)
@@ -105,22 +112,7 @@ func (handler *OrganizationHandler) OrganizationCtx(next http.Handler) http.Hand
 			}
 			return
 		}
-		u, err := handler.GetCurrentUser(r)
-		currentUser, ok := u.(*models.User)
-		if err != nil || !ok {
-			panic(fmt.Sprintf("could not upgrade user to an authable user, type: %T", u))
-		}
-		found := false
-		for _, b := range currentUser.Organizations {
-			if b.ID == org.ID {
-				found = true
-				break
-			}
-		}
-		if !found {
-			httpx.ResponseJSONError(w, r, http.StatusBadRequest, "organization not found")
-			return
-		}
+
 		ctx = context.WithValue(r.Context(), orgKey, org)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
@@ -189,19 +181,20 @@ func (handler *OrganizationHandler) Create(w http.ResponseWriter, r *http.Reques
 
 func (handler *OrganizationHandler) Get(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	org, ok := ctx.Value(orgKey).(*models.Organization)
+	org, ok := ctx.Value(orgKey).(*models.Membership)
 	if !ok {
 		panic(fmt.Sprintf("could not get organization, type: %T", org))
 	}
-	httpx.ResponseJSON(w, http.StatusOK, NewOrganizationResponse(org))
+	fmt.Println(org.JoinedAt)
+	httpx.ResponseJSON(w, http.StatusOK, org)
 	return
 }
 
 func (handler *OrganizationHandler) Update(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	org, ok := ctx.Value(orgKey).(*models.Organization)
+	m, ok := ctx.Value(orgKey).(*models.Membership)
 	if !ok {
-		panic(fmt.Sprintf("could not get organization, type: %T", org))
+		panic(fmt.Sprintf("could not get m, type: %T", m))
 	}
 	data := &organizationPayload{}
 	if err := httpx.DecodeJSON(r, data); err != nil {
@@ -216,6 +209,13 @@ func (handler *OrganizationHandler) Update(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	// update organization's data
+	org := &models.Organization{
+		ID:        m.ID,
+		Name:      m.Name,
+		OwnerId:   m.OwnerId,
+		CreatedAt: *m.CreatedAt,
+		UpdatedAt: *m.UpdatedAt,
+	}
 	org.Name = data.Name
 	err := handler.useCase.Update(ctx, org)
 	if err != nil {
@@ -228,9 +228,16 @@ func (handler *OrganizationHandler) Update(w http.ResponseWriter, r *http.Reques
 
 func (handler *OrganizationHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	org, ok := ctx.Value(orgKey).(*models.Organization)
+	m, ok := ctx.Value(orgKey).(*models.Membership)
 	if !ok {
-		panic(fmt.Sprintf("could not get organization, type: %T", org))
+		panic(fmt.Sprintf("could not get membership, type: %T", m))
+	}
+	org := &models.Organization{
+		ID:        m.ID,
+		Name:      m.Name,
+		OwnerId:   m.OwnerId,
+		CreatedAt: *m.CreatedAt,
+		UpdatedAt: *m.UpdatedAt,
 	}
 	err := handler.useCase.Delete(ctx, org)
 	if err != nil {

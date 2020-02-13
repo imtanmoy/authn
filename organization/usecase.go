@@ -14,4 +14,7 @@ type UseCase interface {
 	Delete(ctx context.Context, org *models.Organization) error
 	Exists(ctx context.Context, id int) bool
 	FindAllByUserId(ctx context.Context, id int) ([]*models.Membership, error)
+
+	//Membership
+	GetMembershipById(ctx context.Context, id, uid int) (*models.Membership, error)
 }

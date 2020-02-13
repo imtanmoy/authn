@@ -71,3 +71,7 @@ func (u *useCase) Delete(ctx context.Context, org *models.Organization) error {
 func (u *useCase) Exists(ctx context.Context, id int) bool {
 	return u.orgRepo.Exists(ctx, id)
 }
+
+func (u *useCase) GetMembershipById(ctx context.Context, id, uid int) (*models.Membership, error) {
+	return u.orgRepo.GetMembershipById(ctx, id, uid)
+}
