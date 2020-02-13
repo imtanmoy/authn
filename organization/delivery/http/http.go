@@ -20,7 +20,7 @@ import (
 type contextKey string
 
 const (
-	orgKey contextKey = "organization"
+	mKey contextKey = "membership"
 )
 
 type organizationPayload struct {
@@ -103,7 +103,7 @@ func (handler *OrganizationHandler) OrganizationCtx(next http.Handler) http.Hand
 			panic(fmt.Sprintf("could not upgrade user to an authable user, type: %T", u))
 		}
 
-		org, err := handler.useCase.GetMembershipById(ctx, id, currentUser.ID)
+		m, err := handler.useCase.GetMembershipById(ctx, id, currentUser.ID)
 		if err != nil {
 			if errors.Is(err, errorx.ErrorNotFound) {
 				httpx.ResponseJSONError(w, r, http.StatusNotFound, "organization not found", err)
@@ -113,7 +113,7 @@ func (handler *OrganizationHandler) OrganizationCtx(next http.Handler) http.Hand
 			return
 		}
 
-		ctx = context.WithValue(r.Context(), orgKey, org)
+		ctx = context.WithValue(r.Context(), mKey, m)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
@@ -181,18 +181,17 @@ func (handler *OrganizationHandler) Create(w http.ResponseWriter, r *http.Reques
 
 func (handler *OrganizationHandler) Get(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	org, ok := ctx.Value(orgKey).(*models.Membership)
+	m, ok := ctx.Value(mKey).(*models.Membership)
 	if !ok {
-		panic(fmt.Sprintf("could not get organization, type: %T", org))
+		panic(fmt.Sprintf("could not get merbership, type: %T", m))
 	}
-	fmt.Println(org.JoinedAt)
-	httpx.ResponseJSON(w, http.StatusOK, org)
+	httpx.ResponseJSON(w, http.StatusOK, m)
 	return
 }
 
 func (handler *OrganizationHandler) Update(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	m, ok := ctx.Value(orgKey).(*models.Membership)
+	m, ok := ctx.Value(mKey).(*models.Membership)
 	if !ok {
 		panic(fmt.Sprintf("could not get m, type: %T", m))
 	}
@@ -228,9 +227,18 @@ func (handler *OrganizationHandler) Update(w http.ResponseWriter, r *http.Reques
 
 func (handler *OrganizationHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	m, ok := ctx.Value(orgKey).(*models.Membership)
+	u, err := handler.GetCurrentUser(r)
+	currentUser, ok := u.(*models.User)
+	if err != nil || !ok {
+		panic(fmt.Sprintf("could not upgrade user to an authable user, type: %T", u))
+	}
+	m, ok := ctx.Value(mKey).(*models.Membership)
 	if !ok {
 		panic(fmt.Sprintf("could not get membership, type: %T", m))
+	}
+	if m.OwnerId != currentUser.ID {
+		httpx.ResponseJSONError(w, r, http.StatusBadRequest, "only owner can delete a organization")
+		return
 	}
 	org := &models.Organization{
 		ID:        m.ID,
@@ -239,7 +247,7 @@ func (handler *OrganizationHandler) Delete(w http.ResponseWriter, r *http.Reques
 		CreatedAt: *m.CreatedAt,
 		UpdatedAt: *m.UpdatedAt,
 	}
-	err := handler.useCase.Delete(ctx, org)
+	err = handler.useCase.Delete(ctx, org)
 	if err != nil {
 		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, err)
 		return
