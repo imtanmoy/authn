@@ -14,6 +14,7 @@ import (
 	"gopkg.in/thedevsaddam/govalidator.v1"
 	"net/http"
 	"net/url"
+	"time"
 )
 
 type contextKey string
@@ -41,8 +42,9 @@ func (o *organizationPayload) validate() url.Values {
 }
 
 type OrganizationResponse struct {
-	ID   int    `json:"id"`
-	Name string `json:"name"`
+	ID       int       `json:"id"`
+	Name     string    `json:"name"`
+	JoinedAt time.Time `json:"joined_at"`
 }
 
 func NewOrganizationResponse(organization *models.Organization) *OrganizationResponse {
@@ -51,17 +53,6 @@ func NewOrganizationResponse(organization *models.Organization) *OrganizationRes
 		Name: organization.Name,
 	}
 	return resp
-}
-
-func NewOrganizationListResponse(organizations []*models.Organization) []*OrganizationResponse {
-	var list []*OrganizationResponse
-	if len(organizations) == 0 {
-		list = make([]*OrganizationResponse, 0)
-	}
-	for _, org := range organizations {
-		list = append(list, NewOrganizationResponse(org))
-	}
-	return list
 }
 
 // OrganizationHandler  represent the http handler for organization
@@ -151,7 +142,7 @@ func (handler *OrganizationHandler) List(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	httpx.ResponseJSON(w, http.StatusOK, NewOrganizationListResponse(organizations))
+	httpx.ResponseJSON(w, http.StatusOK, organizations)
 	return
 }
 

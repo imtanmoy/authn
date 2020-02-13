@@ -27,7 +27,7 @@ func (u *useCase) FindAll(ctx context.Context) ([]*models.Organization, error) {
 	return u.orgRepo.FindAll(ctx)
 }
 
-func (u *useCase) FindAllByUserId(ctx context.Context, id int) ([]*models.Organization, error) {
+func (u *useCase) FindAllByUserId(ctx context.Context, id int) ([]*models.Membership, error) {
 	return u.orgRepo.FindAllByUserId(ctx, id)
 }
 
@@ -39,6 +39,7 @@ func (u *useCase) Store(ctx context.Context, org *models.Organization, user *mod
 	var ou models.UserOrganization
 	ou.UserId = user.ID
 	ou.OrganizationId = org.ID
+	ou.JoinedAt = time.Now()
 	err = u.orgRepo.SaveUserOrganization(ctx, &ou)
 	return err
 }

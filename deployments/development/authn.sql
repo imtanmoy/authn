@@ -3,9 +3,16 @@ CREATE TABLE organizations
 (
     id         BIGSERIAL PRIMARY KEY NOT NULL,
     name       VARCHAR(100)          NOT NULL,
+--     owner_id   BIGINT                NOT NULL,
     created_at TIMESTAMP             NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP             NOT NULL DEFAULT NOW()
 );
+
+-- ALTER TABLE organizations
+--     ADD CONSTRAINT fk_organizations_owner
+--         FOREIGN KEY (owner_id)
+--             REFERENCES users (id);
+
 -- organizations end
 
 -- users start
@@ -29,9 +36,19 @@ ALTER TABLE users
 -- user_organization start
 CREATE TABLE users_organizations
 (
-    user_id         BIGINT NOT NULL,
-    organization_id BIGINT NOT NULL
+    id              BIGSERIAL NOT NULL,
+    user_id         BIGINT    NOT NULL,
+    organization_id BIGINT    NOT NULL,
+    joined_at       TIMESTAMP,
+    enabled         BOOLEAN   NOT NULL DEFAULT TRUE,
+    created_by      BIGINT,
+    updated_by      BIGINT,
+    deleted_by      BIGINT
 );
+
+ALTER TABLE users_organizations
+    ADD CONSTRAINT pk_users_organizations
+        PRIMARY KEY (id);
 
 ALTER TABLE users_organizations
     ADD CONSTRAINT fk_users_organizations_users
@@ -42,6 +59,21 @@ ALTER TABLE users_organizations
     ADD CONSTRAINT fk_users_organizations_organizations
         FOREIGN KEY (organization_id)
             REFERENCES organizations (id);
+
+ALTER TABLE users_organizations
+    ADD CONSTRAINT fk_users_organizations_created_by
+        FOREIGN KEY (created_by)
+            REFERENCES users (id);
+
+ALTER TABLE users_organizations
+    ADD CONSTRAINT fk_users_organizations_updated_by
+        FOREIGN KEY (updated_by)
+            REFERENCES users (id);
+
+ALTER TABLE users_organizations
+    ADD CONSTRAINT fk_users_organizations_deleted_by
+        FOREIGN KEY (deleted_by)
+            REFERENCES users (id);
 
 -- user_organization end
 

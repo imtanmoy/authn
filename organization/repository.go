@@ -16,5 +16,5 @@ type Repository interface {
 	Update(ctx context.Context, org *models.Organization) error
 
 	FindAllUserOrganizationByOid(ctx context.Context, id int) ([]*models.UserOrganization, error)
-	FindAllByUserId(ctx context.Context, id int) ([]*models.Organization, error)
+	FindAllByUserId(ctx context.Context, id int) ([]*models.Membership, error)
 }

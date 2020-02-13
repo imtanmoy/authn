@@ -8,8 +8,9 @@ import (
 
 // Organization represent organizations table
 type Organization struct {
-	ID        int       `pg:"id,notnull,unique,pk"`
-	Name      string    `pg:"name,notnull"`
+	ID   int    `pg:"id,notnull,unique,pk"`
+	Name string `pg:"name,notnull"`
+	//OwnerId   int       `pg:"owner_id,notnull"`
 	CreatedAt time.Time `pg:"created_at,notnull,default:now()"`
 	UpdatedAt time.Time `pg:"updated_at,notnull,default:now()"`
 	Users     []*User   `pg:"many2many:users_organizations"`
@@ -34,4 +35,17 @@ func (o *Organization) BeforeInsert(ctx context.Context) (context.Context, error
 func (o *Organization) BeforeUpdate(ctx context.Context) (context.Context, error) {
 	o.UpdatedAt = time.Now()
 	return ctx, nil
+}
+
+type Membership struct {
+	ID        int       `pg:"organization.id" json:"id"`
+	Name      string    `pg:"name" json:"name"`
+	CreatedAt time.Time `pg:"created_at" json:"created_at"`
+	UpdatedAt time.Time `pg:"updated_at" json:"updated_at"`
+	JoinedAt  time.Time `pg:"joined_at" json:"joined_at"`
+	Enabled   bool      `pg:"enabled" json:"enabled"`
+	CreatedBy int       `pg:"created_by" json:"created_by"`
+	UpdatedBy int       `pg:"updated_by" json:"updated_by"`
+	DeletedBy int       `pg:"deleted_by" json:"deleted_by"`
+	//IsOwner   int
 }
