@@ -1,6 +1,7 @@
 package user
 
 import (
+	"github.com/imtanmoy/authn/confirmation"
 	"github.com/imtanmoy/authn/models"
 	"github.com/imtanmoy/logx"
 	"github.com/mustafaturan/bus"
@@ -35,7 +36,14 @@ func createEventHandler(data interface{}) func() {
 
 	fn := func() {
 		time.Sleep(15 * time.Second)
+		sendConfirmation(&u)
 		logx.Infof("new user registered: %s", u.Email)
+
 	}
 	return fn
+}
+
+func sendConfirmation(u *models.User) {
+	token := confirmation.GenerateConfirmationToken()
+	logx.Infof("sending confirmation to %s with token %s", u.Email, token)
 }

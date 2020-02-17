@@ -19,22 +19,10 @@ import (
 	"time"
 
 	"github.com/go-chi/chi"
-	_chiMiddleware "github.com/go-chi/chi/middleware"
 )
 
-// New configures application resources and routes.
-func New(b events.Event) (*chi.Mux, error) {
-
-	r := chi.NewRouter()
-	r.Use(_chiMiddleware.Recoverer)
-	r.Use(_chiMiddleware.RequestID)
-	r.Use(_chiMiddleware.RealIP)
-	r.Use(_chiMiddleware.DefaultCompress)
-	r.Use(_chiMiddleware.Timeout(15 * time.Second))
-	r.Use(_chiMiddleware.Logger)
-	r.Use(_chiMiddleware.AllowContentType("application/json"))
-	r.Use(_chiMiddleware.Heartbeat("/heartbeat"))
-	//r.Use(render.SetContentType(3)) //render.ContentTypeJSON resolve value 3
+// RegisterHandler configures application resources and routes.
+func RegisterHandler(r *chi.Mux, b events.Event) {
 
 	timeoutContext := 30 * time.Millisecond * time.Second //TODO it will come from config
 
@@ -53,11 +41,11 @@ func New(b events.Event) (*chi.Mux, error) {
 	userUseCase := _userUseCase.NewUseCase(userRepo, timeoutContext)
 	authUseCase := _authUseCase.NewUseCase(userRepo, timeoutContext)
 	invitationUseCase := _inviteUseCase.NewUseCase(inviteRepo, timeoutContext)
+	//confirmationUseCase := _confirmationUseCase.NewUseCase(timeoutContext)
 
 	_orgDeliveryHttp.NewHandler(r, orgUseCase, au)
 	_userDeliveryHttp.NewHandler(r, userUseCase, orgUseCase, au)
 	_authDeliveryHttp.NewHandler(r, authUseCase, userUseCase, au, b)
 	_invitationDeliveryHttp.NewHandler(r, invitationUseCase, userUseCase, orgUseCase, au)
-
-	return r, nil
+	//_confirmationDeliveryHttp.NewHandler(r, confirmationUseCase)
 }

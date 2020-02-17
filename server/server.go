@@ -21,13 +21,14 @@ type Server struct {
 // NewServer creates and configures an APIServer serving all application routes.
 func NewServer() (*Server, error) {
 	logx.Info("configuring server...")
-	logx.Info("configuring Bus...")
-	bus := events.New()
-	bus.Init()
-	handler, err := New(bus)
+	handler, err := NewRouter()
 	if err != nil {
 		return nil, err
 	}
+	logx.Info("configuring Bus...")
+	bus := events.New()
+	bus.Init()
+	RegisterHandler(handler, bus)
 
 	host := config.Conf.SERVER.HOST
 	port := strconv.Itoa(config.Conf.SERVER.PORT)
