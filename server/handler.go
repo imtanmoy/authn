@@ -4,8 +4,6 @@ import (
 	_authDeliveryHttp "github.com/imtanmoy/authn/auth/delivery/http"
 	_authUseCase "github.com/imtanmoy/authn/auth/usecase"
 	"github.com/imtanmoy/authn/config"
-	"github.com/imtanmoy/authn/db"
-	"github.com/imtanmoy/authn/events"
 	"github.com/imtanmoy/authn/internal/authx"
 	_invitationDeliveryHttp "github.com/imtanmoy/authn/invitation/delivery/http"
 	_inviteRepo "github.com/imtanmoy/authn/invitation/repository"
@@ -13,6 +11,7 @@ import (
 	_orgDeliveryHttp "github.com/imtanmoy/authn/organization/delivery/http"
 	_orgRepo "github.com/imtanmoy/authn/organization/repository"
 	_orgUseCase "github.com/imtanmoy/authn/organization/usecase"
+	"github.com/imtanmoy/authn/registry"
 	_userDeliveryHttp "github.com/imtanmoy/authn/user/delivery/http"
 	_userRepo "github.com/imtanmoy/authn/user/repository"
 	_userUseCase "github.com/imtanmoy/authn/user/usecase"
@@ -22,13 +21,15 @@ import (
 )
 
 // RegisterHandler configures application resources and routes.
-func RegisterHandler(r *chi.Mux, b events.Event) {
+func RegisterHandler(r *chi.Mux, rg registry.Registry) {
+
+	b:= rg.Bus()
 
 	timeoutContext := 30 * time.Millisecond * time.Second //TODO it will come from config
 
-	orgRepo := _orgRepo.NewRepository(db.DB)
-	userRepo := _userRepo.NewRepository(db.DB)
-	inviteRepo := _inviteRepo.NewRepository(db.DB)
+	orgRepo := _orgRepo.NewRepository(rg.DB())
+	userRepo := _userRepo.NewRepository(rg.DB())
+	inviteRepo := _inviteRepo.NewRepository(rg.DB())
 
 	authxConfig := authx.AuthxConfig{
 		SecretKey:             config.Conf.JWT_SECRET_KEY,

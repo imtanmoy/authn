@@ -2,7 +2,7 @@ package server
 
 import (
 	"context"
-	"github.com/imtanmoy/authn/events"
+	"github.com/imtanmoy/authn/registry"
 	"net/http"
 	"strconv"
 	"time"
@@ -15,20 +15,17 @@ import (
 // Server provides an http.Server.
 type Server struct {
 	*http.Server
-	bus events.Event
 }
 
 // NewServer creates and configures an APIServer serving all application routes.
-func NewServer() (*Server, error) {
+func NewServer(r registry.Registry) (*Server, error) {
 	logx.Info("configuring server...")
 	handler, err := NewRouter()
 	if err != nil {
 		return nil, err
 	}
 	logx.Info("configuring Bus...")
-	bus := events.New()
-	bus.Init()
-	RegisterHandler(handler, bus)
+	RegisterHandler(handler, r)
 
 	host := config.Conf.SERVER.HOST
 	port := strconv.Itoa(config.Conf.SERVER.PORT)
@@ -42,7 +39,7 @@ func NewServer() (*Server, error) {
 		IdleTimeout:  15 * time.Second,
 	}
 
-	return &Server{&srv, bus}, nil
+	return &Server{&srv}, nil
 }
 
 // Run runs ListenAndServe on the http.Server with graceful shutdown.
@@ -61,7 +58,6 @@ func (srv *Server) Run(ctx context.Context) (err error) {
 	defer func() {
 		cancel()
 	}()
-	srv.bus.Close()
 	srv.SetKeepAlivesEnabled(false)
 	if err = srv.Shutdown(ctxShutDown); err != nil {
 		logx.Fatalf("server Shutdown Failed:%+s", err)

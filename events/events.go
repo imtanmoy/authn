@@ -20,9 +20,10 @@ type EventEmitter interface {
 	EmitWithDelay(ctx context.Context, eventName string, data interface{})
 }
 
-type Event interface {
+type EventBus interface {
 	Init()
 	Close()
+	Run(ctx context.Context)
 	EventEmitter
 }
 
@@ -37,9 +38,15 @@ type event struct {
 	wp            *workerpool.WorkerPool
 }
 
-var _ Event = (*event)(nil)
+func (event *event) Run(ctx context.Context) {
+	event.Init()
+	<- ctx.Done()
+	event.Close()
+}
 
-func New() Event {
+var _ EventBus = (*event)(nil)
+
+func New() EventBus {
 	nonDelayedBus := newBus()
 	delayedBus := newBus()
 	return &event{nonDelayedBus: nonDelayedBus, delayedBus: delayedBus}
