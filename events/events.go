@@ -5,9 +5,13 @@ import (
 	"fmt"
 	"github.com/gammazero/workerpool"
 	_userEventHandler "github.com/imtanmoy/authn/events/handlers/user"
+	"github.com/imtanmoy/logx"
 	"github.com/mustafaturan/bus"
 	"github.com/mustafaturan/monoton"
 	"github.com/mustafaturan/monoton/sequencer"
+	"os"
+	"os/signal"
+	"syscall"
 )
 
 const (
@@ -23,7 +27,7 @@ type EventEmitter interface {
 type EventBus interface {
 	Init()
 	Close()
-	Run(ctx context.Context)
+	Run()
 	EventEmitter
 }
 
@@ -38,10 +42,19 @@ type event struct {
 	wp            *workerpool.WorkerPool
 }
 
-func (event *event) Run(ctx context.Context) {
+func (event *event) Run() {
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGSTOP)
+	ctx, cancel := context.WithCancel(context.Background())
+	go func() {
+		<-c
+		cancel()
+	}()
 	event.Init()
 	<- ctx.Done()
+	logx.Info("system is closing... Please wait to finish all task")
 	event.Close()
+	close(c)
 }
 
 var _ EventBus = (*event)(nil)

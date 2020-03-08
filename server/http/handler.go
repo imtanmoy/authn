@@ -1,4 +1,4 @@
-package server
+package http
 
 import (
 	_authDeliveryHttp "github.com/imtanmoy/authn/auth/delivery/http"

@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/go-pg/pg/v9"
-	"github.com/imtanmoy/authn/db"
 	"github.com/imtanmoy/logx"
 	"github.com/spf13/cobra"
 )
@@ -27,18 +26,18 @@ var createUserCmd = &cobra.Command{
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		logx.Info(args)
-		err := db.InitDB()
-		if err != nil {
-			logx.Fatalf("%s : %s", "Database Could not be initiated", err)
-		}
-		logx.Info("Database Initiated...")
-		switch args[0] {
-		case "su":
-			createSuperUser(db.DB)
-			break
-		default:
-			logx.Errorf("invalid user specified: %s", args[0])
-		}
+		//err := db.InitDB()
+		//if err != nil {
+		//	logx.Fatalf("%s : %s", "Database Could not be initiated", err)
+		//}
+		//logx.Info("Database Initiated...")
+		//switch args[0] {
+		//case "su":
+		//	createSuperUser(db.DB)
+		//	break
+		//default:
+		//	logx.Errorf("invalid user specified: %s", args[0])
+		//}
 	},
 }
 
