@@ -2,10 +2,11 @@ package usecase
 
 import (
 	"context"
+	"time"
+
 	"github.com/imtanmoy/authn/internal/errorx"
 	"github.com/imtanmoy/authn/models"
 	"github.com/imtanmoy/authn/user"
-	"time"
 )
 
 type useCase struct {
@@ -39,11 +40,11 @@ func (uc *useCase) FindAll(ctx context.Context) ([]*models.User, error) {
 	return uc.userRepo.FindAll(ctx)
 }
 
-func (uc *useCase) Store(ctx context.Context, u *models.User) error {
+func (uc *useCase) Save(ctx context.Context, u *models.User) error {
 	return uc.userRepo.Save(ctx, u)
 }
 
-func (uc *useCase) GetById(ctx context.Context, id int) (*models.User, error) {
+func (uc *useCase) GetByID(ctx context.Context, id int) (*models.User, error) {
 	if !uc.Exists(ctx, id) {
 		return nil, errorx.ErrorNotFound
 	}

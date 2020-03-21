@@ -4,6 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
+	"net/url"
+
 	"github.com/go-chi/chi"
 	"github.com/imtanmoy/authn/auth"
 	"github.com/imtanmoy/authn/events"
@@ -13,8 +16,6 @@ import (
 	"github.com/imtanmoy/authn/user"
 	"github.com/imtanmoy/httpx"
 	"gopkg.in/thedevsaddam/govalidator.v1"
-	"net/http"
-	"net/url"
 )
 
 type loginPayload struct {
@@ -90,6 +91,7 @@ type AuthHandler struct {
 	event events.EventEmitter
 }
 
+// Login Handler
 func (handler *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	if ctx == nil {
@@ -139,11 +141,13 @@ func (handler *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
+// Logout Handler
 func (handler *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	//TODO need to work on meaning full logout
 	httpx.NoContent(w)
 }
 
+// GetMe handler
 func (handler *AuthHandler) GetMe(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	if ctx == nil {
@@ -158,6 +162,7 @@ func (handler *AuthHandler) GetMe(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
+// Register handler
 func (handler *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	if ctx == nil {
@@ -168,10 +173,9 @@ func (handler *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		var mr *httpx.MalformedRequest
 		if errors.As(err, &mr) {
 			httpx.ResponseJSONError(w, r, mr.Status, mr.Status, mr.Msg)
-		} else {
-			httpx.ResponseJSONError(w, r, http.StatusInternalServerError, err)
+			return
 		}
-		return
+		panic(err)
 	}
 
 	validationErrors := data.validate()
@@ -195,7 +199,7 @@ func (handler *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	u.Email = data.Email
 	u.Password = hashedPassword
 
-	err = handler.userUseCase.Store(ctx, &u)
+	err = handler.userUseCase.Save(ctx, &u)
 	if err != nil {
 		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, err)
 		return

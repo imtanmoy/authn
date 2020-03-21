@@ -152,7 +152,7 @@ func (handler *UserHandler) UserCtx(next http.Handler) http.Handler {
 			httpx.ResponseJSONError(w, r, http.StatusBadRequest, "invalid request parameter", err)
 			return
 		}
-		u, err := handler.useCase.GetById(ctx, id)
+		u, err := handler.useCase.GetByID(ctx, id)
 		if err != nil {
 			if errors.Is(err, errorx.ErrorNotFound) {
 				httpx.ResponseJSONError(w, r, http.StatusNotFound, "user not found", err)
