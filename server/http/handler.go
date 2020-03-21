@@ -32,8 +32,8 @@ func RegisterHandler(r *chi.Mux, rg registry.Registry) {
 	inviteRepo := _inviteRepo.NewRepository(rg.DB())
 
 	authxConfig := authx.AuthxConfig{
-		SecretKey:             config.Conf.JWT_SECRET_KEY,
-		AccessTokenExpireTime: config.Conf.JWT_ACCESS_TOKEN_EXPIRES,
+		SecretKey:             config.Conf.JwtSecretKey,
+		AccessTokenExpireTime: config.Conf.JwtAccessTokenExpires,
 	}
 
 	au := authx.New(userRepo, &authxConfig)

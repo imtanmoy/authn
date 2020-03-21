@@ -1,18 +1,21 @@
 package registry
 
 import (
-	"github.com/go-pg/pg/v9"
+	"context"
+	"database/sql"
+	"fmt"
 	"github.com/imtanmoy/authn/config"
 	"github.com/imtanmoy/authn/events"
 	"github.com/imtanmoy/logx"
-	"strconv"
+	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4/stdlib"
 )
 
 type Registry interface {
 	Init() error
 	Config() config.Config
 	Bus() events.EventBus
-	DB() *pg.DB
+	DB() *sql.DB
 	Close()
 }
 
@@ -21,7 +24,7 @@ var _ Registry = (*registry)(nil)
 type registry struct {
 	c  config.Config
 	b  events.EventBus
-	db *pg.DB
+	db *sql.DB
 }
 
 func (r *registry) Config() config.Config {
@@ -35,9 +38,9 @@ func (r *registry) Bus() events.EventBus {
 	return r.b
 }
 
-func (r *registry) DB() *pg.DB {
+func (r *registry) DB() *sql.DB {
 	if r.db == nil {
-		db, err := connectDB(r.c.DB.USERNAME, r.c.DB.PASSWORD, r.c.DB.DBNAME, r.c.DB.HOST+":"+strconv.Itoa(r.c.DB.PORT))
+		db, err := connectDB(r.c.DB.HOST, r.c.DB.PORT, r.c.DB.USERNAME, r.c.DB.PASSWORD, r.c.DB.DBNAME)
 		if err != nil {
 			logx.Fatalf("%s : %s", "Database Could not be initiated", err)
 		}
@@ -54,7 +57,7 @@ func NewRegistry(c config.Config) Registry {
 func (r *registry) Init() error {
 	bus := events.New()
 	r.b = bus
-	db, err := connectDB(r.c.DB.USERNAME, r.c.DB.PASSWORD, r.c.DB.DBNAME, r.c.DB.HOST+":"+strconv.Itoa(r.c.DB.PORT))
+	db, err := connectDB(r.c.DB.HOST, r.c.DB.PORT, r.c.DB.USERNAME, r.c.DB.PASSWORD, r.c.DB.DBNAME)
 	if err != nil {
 		return err
 	}
@@ -69,17 +72,25 @@ func (r *registry) Close() {
 	}
 }
 
-func connectDB(username, password, database, address string) (*pg.DB, error) {
-	db := pg.Connect(&pg.Options{
-		User:     username,
-		Password: password,
-		Database: database,
-		Addr:     address,
-	})
-	var n int
-	_, err := db.QueryOne(pg.Scan(&n), "SELECT 1")
-	if err != nil {
-		return nil, err
-	}
+func connectDB(host string, port int, username, password, database string) (*sql.DB, error) {
+	connString := fmt.Sprintf("postgresql://%s:%s@%s:%d/%s", username, password, host, port, database)
+	db := ConnectDBViaPgx(connString)
 	return db, nil
+}
+
+func ConnectPgx(connString string) (*pgx.Conn, error) {
+	connConfig, err := pgx.ParseConfig(connString)
+	if err != nil {
+		panic(err)
+	}
+	conn, err := pgx.ConnectConfig(context.Background(), connConfig)
+	return conn, err
+}
+
+func ConnectDBViaPgx(connString string) *sql.DB {
+	connConfig, err := pgx.ParseConfig(connString)
+	if err != nil {
+		panic(err)
+	}
+	return stdlib.OpenDB(*connConfig)
 }
