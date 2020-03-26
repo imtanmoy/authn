@@ -3,16 +3,7 @@ package http
 import (
 	_authDeliveryHttp "github.com/imtanmoy/authn/auth/delivery/http"
 	_authUseCase "github.com/imtanmoy/authn/auth/usecase"
-	"github.com/imtanmoy/authn/config"
-	"github.com/imtanmoy/authn/internal/authx"
-	_invitationDeliveryHttp "github.com/imtanmoy/authn/invitation/delivery/http"
-	_inviteRepo "github.com/imtanmoy/authn/invitation/repository"
-	_inviteUseCase "github.com/imtanmoy/authn/invitation/usecase"
-	_orgDeliveryHttp "github.com/imtanmoy/authn/organization/delivery/http"
-	_orgRepo "github.com/imtanmoy/authn/organization/repository"
-	_orgUseCase "github.com/imtanmoy/authn/organization/usecase"
 	"github.com/imtanmoy/authn/registry"
-	_userDeliveryHttp "github.com/imtanmoy/authn/user/delivery/http"
 	_userRepo "github.com/imtanmoy/authn/user/repository"
 	_userUseCase "github.com/imtanmoy/authn/user/usecase"
 	"time"
@@ -27,26 +18,27 @@ func RegisterHandler(r *chi.Mux, rg registry.Registry) {
 
 	timeoutContext := 30 * time.Millisecond * time.Second //TODO it will come from config
 
-	orgRepo := _orgRepo.NewRepository(rg.DB())
+	//orgRepo := _orgRepo.NewRepository(rg.DB())
 	userRepo := _userRepo.NewRepository(rg.DB())
-	inviteRepo := _inviteRepo.NewRepository(rg.DB())
+	//inviteRepo := _inviteRepo.NewRepository(rg.DB())
 
-	authxConfig := authx.AuthxConfig{
-		SecretKey:             config.Conf.JwtSecretKey,
-		AccessTokenExpireTime: config.Conf.JwtAccessTokenExpires,
-	}
+	//authxConfig := authx.AuthxConfig{
+	//	SecretKey:             config.Conf.JwtSecretKey,
+	//	AccessTokenExpireTime: config.Conf.JwtAccessTokenExpires,
+	//}
 
-	au := authx.New(userRepo, &authxConfig)
+	//au := authx.New(userRepo, &authxConfig)
 
-	orgUseCase := _orgUseCase.NewUseCase(orgRepo, timeoutContext)
+	//orgUseCase := _orgUseCase.NewUseCase(orgRepo, timeoutContext)
 	userUseCase := _userUseCase.NewUseCase(userRepo, timeoutContext)
 	authUseCase := _authUseCase.NewUseCase(userRepo, timeoutContext)
-	invitationUseCase := _inviteUseCase.NewUseCase(inviteRepo, timeoutContext)
+	//invitationUseCase := _inviteUseCase.NewUseCase(inviteRepo, timeoutContext)
 	//confirmationUseCase := _confirmationUseCase.NewUseCase(timeoutContext)
 
-	_orgDeliveryHttp.NewHandler(r, orgUseCase, au)
-	_userDeliveryHttp.NewHandler(r, userUseCase, orgUseCase, au)
-	_authDeliveryHttp.NewHandler(r, authUseCase, userUseCase, au, b)
-	_invitationDeliveryHttp.NewHandler(r, invitationUseCase, userUseCase, orgUseCase, au)
+	//_orgDeliveryHttp.NewHandler(r, orgUseCase, au)
+	//_userDeliveryHttp.NewHandler(r, userUseCase, orgUseCase, au)
+	//_authDeliveryHttp.NewHandler(r, authUseCase, userUseCase, au, b)
+	_authDeliveryHttp.NewHandler(r, authUseCase, userUseCase, b)
+	//_invitationDeliveryHttp.NewHandler(r, invitationUseCase, userUseCase, orgUseCase, au)
 	//_confirmationDeliveryHttp.NewHandler(r, confirmationUseCase)
 }
