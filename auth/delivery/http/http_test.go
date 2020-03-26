@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"github.com/go-chi/chi"
 	_authUseCase "github.com/imtanmoy/authn/auth/usecase"
+	"github.com/imtanmoy/authn/internal/authx"
 	"github.com/imtanmoy/authn/tests"
 	_userRepo "github.com/imtanmoy/authn/user/repository"
 	_userUseCase "github.com/imtanmoy/authn/user/usecase"
@@ -32,12 +33,62 @@ func init() {
 }
 
 func setup() {
-	timeoutContext := 30 * time.Millisecond * time.Second //TODO it will come from config
+	timeoutContext := 30 * time.Millisecond * time.Second
 	userRepo := _userRepo.NewRepository(db)
+
+	authxConfig := authx.AuthxConfig{
+		SecretKey:             "test",
+		AccessTokenExpireTime: 1,
+	}
+
+	au := authx.New(userRepo, &authxConfig)
+
 	evt := tests.NewMockEventEmitter()
 	userUseCase := _userUseCase.NewUseCase(userRepo, timeoutContext)
 	authUseCase := _authUseCase.NewUseCase(userRepo, timeoutContext)
-	NewHandler(r, authUseCase, userUseCase, evt)
+	NewHandler(r, au, authUseCase, userUseCase, evt)
+}
+
+func TestAuthHandler_Login(t *testing.T) {
+	setup()
+	defer tests.TruncateTestDB(db)
+
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
+	tests.SeedUser(db)
+
+	t.Run("Login with correct credentials", func(t *testing.T) {
+		//POST login
+		payload := &loginPayload{
+			Email:    "test@test.com",
+			Password: "password",
+		}
+		bodyRequest, _ := json.Marshal(payload)
+		req, _ := http.NewRequest("POST", ts.URL+"/login", bytes.NewReader(bodyRequest))
+
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+	})
+
+	t.Run("Login with wrong credentials", func(t *testing.T) {
+		//POST login
+		payload := &loginPayload{
+			Email:    "wrong@test.com",
+			Password: "wrong1234",
+		}
+		bodyRequest, _ := json.Marshal(payload)
+		req, _ := http.NewRequest("POST", ts.URL+"/login", bytes.NewReader(bodyRequest))
+
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+		body := w.Body.Bytes()
+		assert.Contains(t, string(body), "invalid credentials")
+	})
 }
 
 func TestAuthHandler_Register(t *testing.T) {
@@ -85,8 +136,7 @@ func TestAuthHandler_Register(t *testing.T) {
 
 		assert.Equal(t, http.StatusBadRequest, w.Code)
 		body := w.Body.Bytes()
-		got := strings.Contains(string(body), "The email field must be a valid email address")
-		assert.True(t, got)
+		assert.Contains(t, string(body), "The email field must be a valid email address")
 	})
 
 	t.Run("Register failed for password and confirm password doest not match", func(t *testing.T) {

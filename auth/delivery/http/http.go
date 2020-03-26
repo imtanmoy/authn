@@ -3,6 +3,7 @@ package http
 import (
 	"context"
 	"errors"
+	"github.com/imtanmoy/authn/internal/errorx"
 	"net/http"
 	"net/url"
 
@@ -81,6 +82,10 @@ func NewUserResponse(u *models.User) *UserResponse {
 	return resp
 }
 
+type loginResponse struct {
+	Token string `json:"token"`
+}
+
 // AuthHandler  represent the http handler for auth
 type AuthHandler struct {
 	useCase     auth.UseCase
@@ -89,55 +94,55 @@ type AuthHandler struct {
 	event events.EventEmitter
 }
 
-//// Login Handler
-//func (handler *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
-//	ctx := r.Context()
-//	if ctx == nil {
-//		ctx = context.Background()
-//	}
-//	data := &loginPayload{}
-//
-//	if err := httpx.DecodeJSON(r, data); err != nil {
-//		var mr *httpx.MalformedRequest
-//		if errors.As(err, &mr) {
-//			httpx.ResponseJSONError(w, r, mr.Status, mr.Status, mr.Msg)
-//		} else {
-//			httpx.ResponseJSONError(w, r, http.StatusInternalServerError, err)
-//		}
-//		return
-//	}
-//
-//	validationErrors := data.validate()
-//
-//	if len(validationErrors) > 0 {
-//		httpx.ResponseJSONError(w, r, 400, "invalid request", validationErrors)
-//		return
-//	}
-//
-//	u, err := handler.useCase.FindByEmail(ctx, data.Email)
-//	if err != nil {
-//		if errors.Is(err, errorx.ErrorNotFound) {
-//			httpx.ResponseJSONError(w, r, http.StatusBadRequest, "invalid credentials", err)
-//		} else {
-//			httpx.ResponseJSONError(w, r, http.StatusInternalServerError, err)
-//		}
-//		return
-//	}
-//	if !handler.VerifyPassword(u, data.Password) {
-//		httpx.ResponseJSONError(w, r, http.StatusBadRequest, "invalid credentials", err)
-//		return
-//	}
-//
-//	token, err := handler.GenerateToken(u.Email)
-//	if err != nil {
-//		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, err)
-//		return
-//	}
-//	httpx.ResponseJSON(w, http.StatusCreated, struct {
-//		Token string `json:"token"`
-//	}{Token: token})
-//	return
-//}
+// Login Handler
+func (handler *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	data := &loginPayload{}
+
+	if err := httpx.DecodeJSON(r, data); err != nil {
+		var mr *httpx.MalformedRequest
+		if errors.As(err, &mr) {
+			httpx.ResponseJSONError(w, r, mr.Status, mr.Status, mr.Msg)
+		} else {
+			httpx.ResponseJSONError(w, r, http.StatusInternalServerError, err)
+		}
+		return
+	}
+
+	validationErrors := data.validate()
+
+	if len(validationErrors) > 0 {
+		httpx.ResponseJSONError(w, r, 400, "invalid request", validationErrors)
+		return
+	}
+
+	u, err := handler.useCase.FindByEmail(ctx, data.Email)
+	if err != nil {
+		if errors.Is(err, errorx.ErrorNotFound) {
+			httpx.ResponseJSONError(w, r, http.StatusBadRequest, "invalid credentials", err)
+		} else {
+			httpx.ResponseJSONError(w, r, http.StatusInternalServerError, err)
+		}
+		return
+	}
+	if !handler.VerifyPassword(u, data.Password) {
+		httpx.ResponseJSONError(w, r, http.StatusBadRequest, "invalid credentials", err)
+		return
+	}
+
+	token, err := handler.GenerateToken(u.Email)
+	if err != nil {
+		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, err)
+		return
+	}
+	res := &loginResponse{Token: token}
+	httpx.ResponseJSON(w, http.StatusOK, res)
+	return
+}
+
 //
 //// Logout Handler
 //func (handler *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
@@ -209,15 +214,21 @@ func (handler *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 }
 
 // NewHandler will initialize the user's resources endpoint
-func NewHandler(r *chi.Mux, useCase auth.UseCase, userUseCase user.UseCase, event events.EventEmitter) {
+func NewHandler(
+	r *chi.Mux,
+	aux *authx.Authx,
+	useCase auth.UseCase,
+	userUseCase user.UseCase,
+	event events.EventEmitter,
+) {
 	handler := &AuthHandler{
 		useCase:     useCase,
 		userUseCase: userUseCase,
-		//Authx:       aux,
+		Authx:       aux,
 		event:       event,
 	}
 	r.Route("/", func(r chi.Router) {
-		//r.Post("/login", handler.Login)
+		r.Post("/login", handler.Login)
 		r.Post("/register", handler.Register)
 		//r.Group(func(r chi.Router) {
 		//	r.Use(handler.AuthMiddleware)

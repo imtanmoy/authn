@@ -1,8 +1,7 @@
 package tests
 
 import (
-	"github.com/go-pg/pg/v9"
-	"github.com/imtanmoy/authn/models"
+	"database/sql"
 	"golang.org/x/crypto/bcrypt"
 	"log"
 )
@@ -12,22 +11,20 @@ func hashPassword(password string) (string, error) {
 	return string(bytes), err
 }
 
-func SeedUser(db *pg.DB) {
+func SeedUser(db *sql.DB) {
 	hashedPass, _ := hashPassword("password")
-	var u models.User
-	u.Name = "Test"
-	u.Email = "tests@tests.com"
-	u.Password = hashedPass
-	err := db.Insert(u)
+	name := "Test"
+	email := "test@test.com"
+	password := hashedPass
+	_, err := db.Exec("INSERT INTO users(name, email, password) VALUES ($1,$2,$3)", name, email, password)
 	if err != nil {
 		log.Fatal(err)
 	}
 }
 
-func SeedOrganization(db *pg.DB) {
-	var org models.Organization
-	org.Name = "Test Organization"
-	err := db.Insert(org)
+func SeedOrganization(db *sql.DB) {
+	name := "Test Organization"
+	_, err := db.Exec("INSERT INTO organizations(name) VALUES ($1)", name)
 	if err != nil {
 		log.Fatal(err)
 	}
