@@ -178,9 +178,9 @@ func (handler *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 
 	validationErrors := data.validate()
 
-	//if handler.userUseCase.ExistsByEmail(ctx, data.Email) {
-	//	validationErrors.Add("email", "user with this email already exists")
-	//}
+	if handler.userUseCase.ExistsByEmail(ctx, data.Email) {
+		validationErrors.Add("email", "user with this email already exists")
+	}
 
 	if len(validationErrors) > 0 {
 		httpx.ResponseJSONError(w, r, 400, "invalid request", validationErrors)

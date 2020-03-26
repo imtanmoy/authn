@@ -24,7 +24,7 @@ func (u *User) GetPassword() (password string) {
 }
 
 func (u *User) PutPassword(password string) {
-	panic("implement me")
+	u.Password = password
 }
 
 func (u *User) GetId() (id int) {

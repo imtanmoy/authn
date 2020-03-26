@@ -62,6 +62,6 @@ func (uc *useCase) Save(ctx context.Context, u *models.User) error {
 //	return uc.userRepo.Exists(ctx, id)
 //}
 //
-//func (uc *useCase) ExistsByEmail(ctx context.Context, email string) bool {
-//	return uc.userRepo.ExistsByEmail(ctx, email)
-//}
+func (uc *useCase) ExistsByEmail(ctx context.Context, email string) bool {
+	return uc.userRepo.ExistsByEmail(ctx, email)
+}

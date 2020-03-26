@@ -12,7 +12,7 @@ type Repository interface {
 	//SaveUserOrganization(ctx context.Context, orgUser *models.UserOrganization) error
 	//Find(ctx context.Context, id int) (*models.User, error)
 	//Exists(ctx context.Context, id int) bool
-	//ExistsByEmail(ctx context.Context, email string) bool
+	ExistsByEmail(ctx context.Context, email string) bool
 	////Delete(ctx context.Context, u *models.User) error
 	////Update(ctx context.Context, u *models.User) error
 	//FindByEmail(ctx context.Context, email string) (*models.User, error)

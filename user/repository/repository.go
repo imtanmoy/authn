@@ -7,6 +7,7 @@ import (
 	"github.com/imtanmoy/authn/internal/errorx"
 	"github.com/imtanmoy/authn/models"
 	"github.com/imtanmoy/authn/user"
+	"github.com/imtanmoy/logx"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/stdlib"
 	"log"
@@ -76,7 +77,7 @@ func (repo *repository) Save(ctx context.Context, u *models.User) error {
 		"RETURNING id, created_at",
 		u.Name, u.Email, u.Password).
 		Scan(&lastInsertedID, &createdAt)
-	u.ID =lastInsertedID
+	u.ID = lastInsertedID
 	fmt.Println(createdAt)
 	if err != nil {
 		return err
@@ -149,19 +150,15 @@ func (repo *repository) Save(ctx context.Context, u *models.User) error {
 //	return u.ID == id
 //}
 //
-//func (repo *repository) ExistsByEmail(ctx context.Context, email string) bool {
-//	db := repo.db.WithContext(ctx)
-//	u := new(models.User)
-//	err := db.Model(u).Where("email = ?", email).Select()
-//	if err != nil {
-//		if errors.Is(err, pg.ErrNoRows) {
-//			return false
-//		} else {
-//			panic(err)
-//		}
-//	}
-//	return u.Email == email
-//}
+func (repo *repository) ExistsByEmail(ctx context.Context, email string) bool {
+	found := 0
+	err := repo.conn.QueryRow(ctx, "SELECT COUNT(*) AS found FROM users WHERE email = $1", email).
+		Scan(&found)
+	if err != nil {
+		logx.Fatal(err)
+	}
+	return found > 0
+}
 
 //func (repo *repository) Delete(ctx context.Context, u *models.User) error {
 //	db := repo.db.WithContext(ctx)
