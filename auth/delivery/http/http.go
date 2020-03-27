@@ -3,6 +3,7 @@ package http
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/imtanmoy/authn/internal/errorx"
 	"net/http"
 	"net/url"
@@ -143,27 +144,26 @@ func (handler *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-//
-//// Logout Handler
-//func (handler *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
-//	//TODO need to work on meaning full logout
-//	httpx.NoContent(w)
-//}
-//
-//// GetMe handler
-//func (handler *AuthHandler) GetMe(w http.ResponseWriter, r *http.Request) {
-//	ctx := r.Context()
-//	if ctx == nil {
-//		ctx = context.Background()
-//	}
-//	u, err := handler.GetCurrentUser(r)
-//	us, ok := u.(*models.User)
-//	if err != nil || !ok {
-//		panic(fmt.Sprintf("could not upgrade user to an authable user, type: %T", u))
-//	}
-//	httpx.ResponseJSON(w, http.StatusOK, NewUserResponse(us))
-//	return
-//}
+// Logout Handler
+func (handler *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
+	//TODO need to work on meaning full logout
+	httpx.NoContent(w)
+}
+
+// GetMe handler
+func (handler *AuthHandler) GetMe(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	u, err := handler.GetCurrentUser(r)
+	us, ok := u.(*models.User)
+	if err != nil || !ok {
+		panic(fmt.Sprintf("could not upgrade user to an authable user, type: %T", u))
+	}
+	httpx.ResponseJSON(w, http.StatusOK, NewUserResponse(us))
+	return
+}
 
 // Register handler
 func (handler *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
@@ -230,10 +230,10 @@ func NewHandler(
 	r.Route("/", func(r chi.Router) {
 		r.Post("/login", handler.Login)
 		r.Post("/register", handler.Register)
-		//r.Group(func(r chi.Router) {
-		//	r.Use(handler.AuthMiddleware)
-		//	r.Post("/logout", handler.Logout)
-		//	r.Get("/me", handler.GetMe)
-		//})
+		r.Group(func(r chi.Router) {
+			r.Use(handler.AuthMiddleware)
+			r.Post("/logout", handler.Logout)
+			r.Get("/me", handler.GetMe)
+		})
 	})
 }

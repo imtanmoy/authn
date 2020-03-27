@@ -61,7 +61,7 @@ func (ax *Authx) AuthMiddleware(next http.Handler) http.Handler {
 			if errors.As(err, &ae) {
 				httpx.ResponseJSONError(w, r, ae.Status, ae.Code, ae.Message)
 			} else {
-				httpx.ResponseJSONError(w, r, http.StatusInternalServerError, err)
+				panic(err)
 			}
 			return
 		}
@@ -71,7 +71,7 @@ func (ax *Authx) AuthMiddleware(next http.Handler) http.Handler {
 			if errors.As(err, &ae) {
 				httpx.ResponseJSONError(w, r, ae.Status, ae.Code, ae.Message)
 			} else {
-				httpx.ResponseJSONError(w, r, http.StatusInternalServerError, err)
+				panic(err)
 			}
 			return
 		}
@@ -117,7 +117,7 @@ func (ax *Authx) setCurrentUserAndServe(w http.ResponseWriter, r *http.Request, 
 		if errors.Is(err, errorx.ErrorNotFound) {
 			httpx.ResponseJSONError(w, r, http.StatusNotFound, "user not found", err)
 		} else {
-			httpx.ResponseJSONError(w, r, http.StatusInternalServerError, err)
+			panic(err)
 		}
 		return
 	}

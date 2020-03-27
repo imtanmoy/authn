@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"github.com/go-chi/chi"
 	_authUseCase "github.com/imtanmoy/authn/auth/usecase"
 	"github.com/imtanmoy/authn/internal/authx"
@@ -20,8 +21,9 @@ import (
 )
 
 var (
-	r  = chi.NewRouter()
-	db *sql.DB
+	r   = chi.NewRouter()
+	db  *sql.DB
+	aux *authx.Authx
 )
 
 func init() {
@@ -42,12 +44,12 @@ func setup() {
 		AccessTokenExpireTime: 1,
 	}
 
-	au := authx.New(userRepo, &authxConfig)
+	aux = authx.New(userRepo, &authxConfig)
 
 	evt := tests.NewMockEventEmitter()
 	userUseCase := _userUseCase.NewUseCase(userRepo, timeoutContext)
 	authUseCase := _authUseCase.NewUseCase(userRepo, timeoutContext)
-	NewHandler(r, au, authUseCase, userUseCase, evt)
+	NewHandler(r, aux, authUseCase, userUseCase, evt)
 }
 
 func TestAuthHandler_Login(t *testing.T) {
@@ -179,4 +181,55 @@ func TestAuthHandler_Register(t *testing.T) {
 		got := strings.Contains(string(body), "user with this email already exists")
 		assert.True(t, got)
 	})
+}
+
+func TestAuthHandler_Logout(t *testing.T) {
+	tests.TruncateTestDB(db)
+	defer tests.TruncateTestDB(db)
+
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
+	tests.SeedUser(db)
+
+	token, err := aux.GenerateToken("test@test.com")
+	if err != nil {
+		panic(err)
+	}
+
+	req, _ := http.NewRequest("POST", ts.URL+"/logout", nil)
+
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusNoContent, w.Code)
+}
+
+func TestAuthHandler_GetMe(t *testing.T) {
+	tests.TruncateTestDB(db)
+	defer tests.TruncateTestDB(db)
+
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
+	tests.SeedUser(db)
+
+	token, err := aux.GenerateToken("test@test.com")
+	if err != nil {
+		panic(err)
+	}
+
+	req, _ := http.NewRequest("GET", ts.URL+"/me", nil)
+
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusOK, w.Code)
+	var got *UserResponse
+	body := w.Body.Bytes()
+	err = json.Unmarshal(body, &got)
+	assert.Nil(t, err)
+	assert.Equal(t, "test@test.com", got.Email)
 }
