@@ -11,6 +11,7 @@ require (
 	github.com/google/uuid v1.1.1
 	github.com/imtanmoy/httpx v0.0.3
 	github.com/imtanmoy/logx v0.0.3
+	github.com/jackc/pgconn v1.4.0
 	github.com/jackc/pgx/v4 v4.5.0
 	github.com/lib/pq v1.3.0 // indirect
 	github.com/mustafaturan/bus v1.0.2

@@ -9,6 +9,7 @@ import (
 	"github.com/imtanmoy/authn/models"
 	"github.com/imtanmoy/authn/user"
 	"github.com/imtanmoy/logx"
+	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/stdlib"
 	"log"
@@ -31,28 +32,20 @@ func NewRepository(db *sql.DB) user.Repository {
 }
 
 func (repo *repository) FindAll(ctx context.Context) ([]*models.User, error) {
-	rows, _ := repo.conn.Query(ctx, "select * from users")
+	rows, _ := repo.conn.Query(ctx, "SELECT id, name, email, created_at, updated_at "+
+		"FROM users WHERE deleted_at IS NULL")
 	var users []*models.User
 	if rows.Err() != nil {
 		return nil, errorx.ErrInternalDB
 	}
 	for rows.Next() {
 		var u models.User
-		err := rows.Scan(&u.ID, &u.Name, &u.Email, &u.CreatedAt, &u.UpdatedAt, &u.DeletedAt)
+		err := rows.Scan(&u.ID, &u.Name, &u.Email, &u.CreatedAt, &u.UpdatedAt)
 		if err != nil {
 			return make([]*models.User, 0), err
 		}
 		users = append(users, &u)
 	}
-
-	//if err != nil {
-	//	_, ok := err.(pg.Error)
-	//	if ok {
-	//		return nil, errorx.ErrInternalDB
-	//	} else {
-	//		return nil, errorx.ErrInternalServer
-	//	}
-	//}
 	return users, nil
 }
 
@@ -65,23 +58,24 @@ func (repo *repository) FindAll(ctx context.Context) ([]*models.User, error) {
 //}
 
 func (repo *repository) Save(ctx context.Context, u *models.User) error {
-	//res, err := repo.conn.Exec(ctx,
-	//	"INSERT INTO users(name, email, password) "+
-	//		"VALUES ($1,$2,$3) "+
-	//		"RETURNING id,name,email,password,created_at, updated_at, deleted_at",
-	//	u.Name, u.Email, u.Password)
-
 	lastInsertedID := 0
 	var createdAt time.Time
+	var updatedAt time.Time
 	err := repo.conn.QueryRow(ctx, "INSERT INTO users(name, email, password) "+
 		"VALUES ($1,$2,$3) "+
-		"RETURNING id, created_at",
+		"RETURNING id, created_at, updated_at",
 		u.Name, u.Email, u.Password).
-		Scan(&lastInsertedID, &createdAt)
+		Scan(&lastInsertedID, &createdAt, &updatedAt)
 	u.ID = lastInsertedID
-	fmt.Println(createdAt)
+	u.CreatedAt = createdAt
+	u.UpdatedAt = updatedAt
 	if err != nil {
-		return err
+		pgerr, ok := err.(*pgconn.PgError)
+		fmt.Println(pgerr.SQLState())
+		if ok {
+			return errorx.ErrInternalDB
+		}
+		return errorx.ErrInternalServer
 	}
 	return err
 }
@@ -141,7 +135,7 @@ func (repo *repository) GetByEmail(ctx context.Context, identity string) (authx.
 //
 func (repo *repository) ExistsByEmail(ctx context.Context, email string) bool {
 	found := 0
-	err := repo.conn.QueryRow(ctx, "SELECT COUNT(*) AS found FROM users WHERE email = $1", email).
+	err := repo.conn.QueryRow(ctx, "SELECT COUNT(*) AS found FROM users WHERE email = $1 AND deleted_at IS NULL", email).
 		Scan(&found)
 	if err != nil {
 		logx.Fatal(err)

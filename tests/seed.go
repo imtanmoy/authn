@@ -2,8 +2,12 @@ package tests
 
 import (
 	"database/sql"
+	"fmt"
+	"github.com/imtanmoy/authn/models"
 	"golang.org/x/crypto/bcrypt"
 	"log"
+	"strconv"
+	"strings"
 )
 
 func hashPassword(password string) (string, error) {
@@ -28,4 +32,51 @@ func SeedOrganization(db *sql.DB) {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func FakeUsers(nums int) []*models.User {
+	var users []*models.User
+	for i := 0; i < nums; i++ {
+		str := strconv.Itoa(i)
+		u := &models.User{
+			Name:     "Test " + str,
+			Email:    "test" + str + "@test.com",
+			Password: "password",
+		}
+		users = append(users, u)
+	}
+	return users
+}
+
+func SeedUsers(db *sql.DB) {
+	users := FakeUsers(10)
+	err := InsertTestUsers(db, users)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func InsertTestUsers(db *sql.DB, users []*models.User) error {
+	valueStrings := make([]string, 0, len(users))
+	valueArgs := make([]interface{}, 0, len(users)*3)
+	for i, u := range users {
+		valueStrings = append(valueStrings, fmt.Sprintf("($%d, $%d, $%d)", i*3+1, i*3+2, i*3+3))
+
+		valueArgs = append(valueArgs, u.Name)
+		valueArgs = append(valueArgs, u.Email)
+		valueArgs = append(valueArgs, u.Password)
+	}
+	smt := `INSERT INTO users(name, email, password) VALUES %s`
+	smt = fmt.Sprintf(smt, strings.Join(valueStrings, ","))
+	fmt.Println("statement:: ", smt)
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	_, err = tx.Exec(smt, valueArgs...)
+	if err != nil {
+		_ = tx.Rollback()
+		return err
+	}
+	return tx.Commit()
 }
