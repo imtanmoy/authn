@@ -68,7 +68,6 @@ func InsertTestUsers(db *sql.DB, users []*models.User) error {
 	}
 	smt := `INSERT INTO users(name, email, password) VALUES %s`
 	smt = fmt.Sprintf(smt, strings.Join(valueStrings, ","))
-	fmt.Println("statement:: ", smt)
 	tx, err := db.Begin()
 	if err != nil {
 		return err

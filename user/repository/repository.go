@@ -86,30 +86,26 @@ func (repo *repository) Save(ctx context.Context, u *models.User) error {
 //	return err
 //}
 
-//func (repo *repository) Find(ctx context.Context, id int) (*models.User, error) {
-//	db := repo.db.WithContext(ctx)
-//	var u models.User
-//	err := db.Model(&u).Where("id = ?", id).Select()
-//	if err != nil {
-//		if errors.Is(err, pg.ErrNoRows) {
-//			return nil, errorx.ErrorNotFound
-//		} else {
-//			panic(err)
-//		}
-//	}
-//	return &u, err
-//}
-//
+func (repo *repository) FindByID(ctx context.Context, id int) (*models.User, error) {
+	var u models.User
+	err := repo.conn.QueryRow(ctx, "SELECT id, name, email, created_at, updated_at "+
+		"FROM users WHERE id = $1 "+
+		"AND deleted_at IS NULL", id).
+		Scan(&u.ID, &u.Name, &u.Email, &u.CreatedAt, &u.UpdatedAt)
+	if err != nil {
+		return nil, err
+	}
+	return &u, nil
+}
+
 func (repo *repository) FindByEmail(ctx context.Context, email string) (*models.User, error) {
 	var u models.User
-	var deletedAt sql.NullTime
-	err := repo.conn.QueryRow(ctx, "SELECT id, name, email, password, created_at, updated_at, deleted_at "+
+	err := repo.conn.QueryRow(ctx, "SELECT id, name, email, password, created_at, updated_at "+
 		"FROM users WHERE email = $1 "+
 		"AND deleted_at IS NULL", email).
-		Scan(&u.ID, &u.Name, &u.Email, &u.Password, &u.CreatedAt, &u.UpdatedAt, &deletedAt)
-	u.DeletedAt = time.Time{}
-	if deletedAt.Valid {
-		u.DeletedAt = deletedAt.Time
+		Scan(&u.ID, &u.Name, &u.Email, &u.Password, &u.CreatedAt, &u.UpdatedAt)
+	if err != nil {
+		return nil, err
 	}
 	return &u, err
 }
@@ -118,21 +114,16 @@ func (repo *repository) GetByEmail(ctx context.Context, identity string) (authx.
 	return repo.FindByEmail(ctx, identity)
 }
 
-//
-//func (repo *repository) Exists(ctx context.Context, id int) bool {
-//	db := repo.db.WithContext(ctx)
-//	u := new(models.User)
-//	err := db.Model(u).Where("id = ?", id).Select()
-//	if err != nil {
-//		if errors.Is(err, pg.ErrNoRows) {
-//			return false
-//		} else {
-//			panic(err)
-//		}
-//	}
-//	return u.ID == id
-//}
-//
+func (repo *repository) ExistsByID(ctx context.Context, id int) bool {
+	found := 0
+	err := repo.conn.QueryRow(ctx, "SELECT COUNT(*) AS found FROM users WHERE id = $1 AND deleted_at IS NULL", id).
+		Scan(&found)
+	if err != nil {
+		logx.Fatal(err)
+	}
+	return found == 1
+}
+
 func (repo *repository) ExistsByEmail(ctx context.Context, email string) bool {
 	found := 0
 	err := repo.conn.QueryRow(ctx, "SELECT COUNT(*) AS found FROM users WHERE email = $1 AND deleted_at IS NULL", email).
