@@ -5,6 +5,9 @@ import (
 	_authUseCase "github.com/imtanmoy/authn/auth/usecase"
 	"github.com/imtanmoy/authn/config"
 	"github.com/imtanmoy/authn/internal/authx"
+	_orgDeliveryHttp "github.com/imtanmoy/authn/organization/delivery/http"
+	_orgRepo "github.com/imtanmoy/authn/organization/repository"
+	_orgUseCase "github.com/imtanmoy/authn/organization/usecase"
 	"github.com/imtanmoy/authn/registry"
 	_userRepo "github.com/imtanmoy/authn/user/repository"
 	_userUseCase "github.com/imtanmoy/authn/user/usecase"
@@ -20,7 +23,7 @@ func RegisterHandler(r *chi.Mux, rg registry.Registry) {
 
 	timeoutContext := 30 * time.Millisecond * time.Second //TODO it will come from config
 
-	//orgRepo := _orgRepo.NewRepository(rg.DB())
+	orgRepo := _orgRepo.NewRepository(rg.DB())
 	userRepo := _userRepo.NewRepository(rg.DB())
 	//inviteRepo := _inviteRepo.NewRepository(rg.DB())
 
@@ -31,13 +34,13 @@ func RegisterHandler(r *chi.Mux, rg registry.Registry) {
 
 	au := authx.New(userRepo, &authxConfig)
 
-	//orgUseCase := _orgUseCase.NewUseCase(orgRepo, timeoutContext)
+	orgUseCase := _orgUseCase.NewUseCase(orgRepo, timeoutContext)
 	userUseCase := _userUseCase.NewUseCase(userRepo, timeoutContext)
 	authUseCase := _authUseCase.NewUseCase(userRepo, timeoutContext)
 	//invitationUseCase := _inviteUseCase.NewUseCase(inviteRepo, timeoutContext)
 	//confirmationUseCase := _confirmationUseCase.NewUseCase(timeoutContext)
 
-	//_orgDeliveryHttp.NewHandler(r, orgUseCase, au)
+	_orgDeliveryHttp.NewHandler(r, au, orgUseCase, b)
 	//_userDeliveryHttp.NewHandler(r, userUseCase, orgUseCase, au)
 	//_authDeliveryHttp.NewHandler(r, authUseCase, userUseCase, au, b)
 	_authDeliveryHttp.NewHandler(r, au, authUseCase, userUseCase, b)
