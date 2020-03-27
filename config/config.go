@@ -1,7 +1,8 @@
 package config
 
 import (
-	"log"
+	"fmt"
+	"github.com/imtanmoy/logx"
 	"strings"
 
 	"github.com/spf13/viper"
@@ -35,13 +36,17 @@ var Conf Config
 
 // InitConfig initialze the Conf
 func InitConfig() {
-	config := initViper()
+	config, err := initViper("./")
+	if err != nil {
+		logx.Fatal(err)
+		return
+	}
 	Conf = *config
 }
 
-func initViper() *Config {
+func initViper(configPath string) (*Config, error) {
 	viper.SetConfigName("config")
-	viper.AddConfigPath(".")
+	viper.AddConfigPath(configPath)
 
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	viper.AutomaticEnv()
@@ -49,13 +54,13 @@ func initViper() *Config {
 	viper.SetConfigType("yml")
 	err := viper.ReadInConfig()
 	if err != nil {
-		log.Fatalf("Error reading config file, %s", err)
+		return nil, fmt.Errorf("error reading config file, %s", err)
 	}
 
 	var config Config
 	err = viper.Unmarshal(&config)
 	if err != nil {
-		log.Panicf("Unable to decode into struct, %v", err)
+		return nil, fmt.Errorf("unable to decode into struct, %v", err)
 	}
-	return &config
+	return &config, nil
 }
