@@ -13,8 +13,8 @@ type Repository interface {
 	//SaveUserOrganization(ctx context.Context, orgUser *models.UserOrganization) error
 	ExistsByID(ctx context.Context, id int) bool
 	ExistsByEmail(ctx context.Context, email string) bool
-	////Delete(ctx context.Context, u *models.User) error
-	////Update(ctx context.Context, u *models.User) error
+	Delete(ctx context.Context, u *models.User) error
+	Update(ctx context.Context, u *models.User) error
 	FindByID(ctx context.Context, id int) (*models.User, error)
 	FindByEmail(ctx context.Context, email string) (*models.User, error)
 	GetByEmail(ctx context.Context, identity string) (authx.AuthUser, error)

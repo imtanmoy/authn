@@ -212,3 +212,44 @@ func TestRepository_GetByEmail(t *testing.T) {
 		}
 	}
 }
+
+func TestRepository_Delete(t *testing.T) {
+	defer tests.TruncateTestDB(db)
+	ctx := context.Background()
+
+	tests.SeedUsers(db)
+
+	users, _ := repo.FindAll(ctx)
+
+	for _, u := range users {
+		err := repo.Delete(ctx, u)
+		assert.Nil(t, err)
+		assert.NotZero(t, u.DeletedAt)
+	}
+}
+
+func TestRepository_Update(t *testing.T) {
+	defer tests.TruncateTestDB(db)
+	ctx := context.Background()
+
+	tests.SeedUsers(db)
+
+	users, _ := repo.FindAll(ctx)
+
+	for _, u := range users {
+		u.Name = reverse(u.Name)
+	}
+
+	for _, u := range users {
+		err := repo.Update(ctx, u)
+		assert.Nil(t, err)
+	}
+}
+
+func reverse(s string) string {
+	result := ""
+	for _, v := range s {
+		result = string(v) + result
+	}
+	return result
+}

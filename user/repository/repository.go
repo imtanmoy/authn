@@ -134,16 +134,15 @@ func (repo *repository) ExistsByEmail(ctx context.Context, email string) bool {
 	return found > 0
 }
 
-//func (repo *repository) Delete(ctx context.Context, u *models.User) error {
-//	db := repo.db.WithContext(ctx)
-//	err := db.Delete(u)
-//	err = godbx.ParsePgError(err)
-//	return err
-//}
-//
-//func (repo *repository) Update(ctx context.Context, u *models.User) error {
-//	db := repo.db.WithContext(ctx)
-//	err := db.Update(u)
-//	err = godbx.ParsePgError(err)
-//	return err
-//}
+func (repo *repository) Delete(ctx context.Context, u *models.User) error {
+	now := time.Now().UTC()
+	_, err := repo.conn.Exec(ctx, "UPDATE users SET deleted_at = $1 WHERE id = $2", now, u.ID)
+	u.DeletedAt = now
+	return err
+}
+
+func (repo *repository) Update(ctx context.Context, u *models.User) error {
+	now := time.Now().UTC()
+	_, err := repo.conn.Exec(ctx, "UPDATE users SET name = $1, updated_at= $2 WHERE id = $3", u.Name, now, u.ID)
+	return err
+}
