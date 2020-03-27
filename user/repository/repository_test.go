@@ -23,6 +23,7 @@ func init() {
 }
 
 func TestRepository_FindAll(t *testing.T) {
+	tests.TruncateTestDB(db)
 	defer tests.TruncateTestDB(db)
 	ctx := context.Background()
 
@@ -35,6 +36,7 @@ func TestRepository_FindAll(t *testing.T) {
 }
 
 func TestRepository_Save(t *testing.T) {
+	tests.TruncateTestDB(db)
 	defer tests.TruncateTestDB(db)
 	ctx := context.Background()
 
@@ -54,10 +56,9 @@ func TestRepository_Save(t *testing.T) {
 }
 
 func TestRepository_ExistsByEmail(t *testing.T) {
+	tests.TruncateTestDB(db)
 	defer tests.TruncateTestDB(db)
 	ctx := context.Background()
-
-	t.Parallel()
 
 	users := tests.FakeUsers(10)
 
@@ -81,10 +82,9 @@ func TestRepository_ExistsByEmail(t *testing.T) {
 }
 
 func TestRepository_ExistsByID(t *testing.T) {
+	tests.TruncateTestDB(db)
 	defer tests.TruncateTestDB(db)
 	ctx := context.Background()
-
-	t.Parallel()
 
 	users := tests.FakeUsers(10)
 
@@ -109,6 +109,7 @@ func TestRepository_ExistsByID(t *testing.T) {
 }
 
 func TestRepository_FindByID(t *testing.T) {
+	tests.TruncateTestDB(db)
 	defer tests.TruncateTestDB(db)
 	ctx := context.Background()
 
@@ -144,6 +145,7 @@ func TestRepository_FindByID(t *testing.T) {
 }
 
 func TestRepository_FindByEmail(t *testing.T) {
+	tests.TruncateTestDB(db)
 	defer tests.TruncateTestDB(db)
 	ctx := context.Background()
 
@@ -179,6 +181,7 @@ func TestRepository_FindByEmail(t *testing.T) {
 }
 
 func TestRepository_GetByEmail(t *testing.T) {
+	tests.TruncateTestDB(db)
 	defer tests.TruncateTestDB(db)
 	ctx := context.Background()
 
@@ -214,6 +217,7 @@ func TestRepository_GetByEmail(t *testing.T) {
 }
 
 func TestRepository_Delete(t *testing.T) {
+	tests.TruncateTestDB(db)
 	defer tests.TruncateTestDB(db)
 	ctx := context.Background()
 
@@ -229,6 +233,7 @@ func TestRepository_Delete(t *testing.T) {
 }
 
 func TestRepository_Update(t *testing.T) {
+	tests.TruncateTestDB(db)
 	defer tests.TruncateTestDB(db)
 	ctx := context.Background()
 

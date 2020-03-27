@@ -30,6 +30,7 @@ func init() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	setup()
 }
 
 func setup() {
@@ -50,7 +51,7 @@ func setup() {
 }
 
 func TestAuthHandler_Login(t *testing.T) {
-	setup()
+	tests.TruncateTestDB(db)
 	defer tests.TruncateTestDB(db)
 
 	ts := httptest.NewServer(r)
@@ -92,7 +93,7 @@ func TestAuthHandler_Login(t *testing.T) {
 }
 
 func TestAuthHandler_Register(t *testing.T) {
-	setup()
+	tests.TruncateTestDB(db)
 	defer tests.TruncateTestDB(db)
 
 	ts := httptest.NewServer(r)

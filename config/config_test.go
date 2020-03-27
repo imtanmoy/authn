@@ -1,11 +1,11 @@
 package config
 
-import (
-	"github.com/stretchr/testify/assert"
-	"testing"
-)
+//func TestInitConfig(t *testing.T) {
+//	InitConfig()
+//	assert.NotNil(t, Conf)
+//}
 
-func TestInitConfig(t *testing.T) {
-	InitConfig()
-	assert.NotNil(t, Conf)
-}
+//func TestInitConfig(t *testing.T) {
+//	conf := initViper("../config.yml")
+//	assert.NotNil(t, conf)
+//}
