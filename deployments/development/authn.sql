@@ -3,8 +3,10 @@ CREATE TABLE organizations
 (
     id         BIGSERIAL PRIMARY KEY NOT NULL,
     name       VARCHAR(100)          NOT NULL,
+    owner_id   BIGINT                NOT NULL,
     created_at TIMESTAMP             NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP             NOT NULL DEFAULT NOW()
+    updated_at TIMESTAMP             NOT NULL DEFAULT NOW(),
+    deleted_at TIMESTAMP             NULL
 );
 -- organizations end
 
@@ -23,6 +25,11 @@ CREATE TABLE users
 ALTER TABLE users
     ADD CONSTRAINT uk_users_email
         UNIQUE (email, deleted_at);
+
+ALTER TABLE organizations
+    ADD CONSTRAINT fk_organizations_owner_user
+        FOREIGN KEY (owner_id)
+            REFERENCES users (id);
 -- users end
 
 

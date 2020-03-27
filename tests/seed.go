@@ -79,3 +79,16 @@ func InsertTestUsers(db *sql.DB, users []*models.User) error {
 	}
 	return tx.Commit()
 }
+
+func FakeOrgs(nums int) []*models.Organization {
+	var orgs []*models.Organization
+	for i := 0; i < nums; i++ {
+		str := strconv.Itoa(i)
+		u := &models.Organization{
+			Name:    "Test orgs " + str,
+			OwnerID: 1,
+		}
+		orgs = append(orgs, u)
+	}
+	return orgs
+}
