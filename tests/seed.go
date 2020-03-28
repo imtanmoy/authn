@@ -92,3 +92,26 @@ func FakeOrgs(nums int) []*models.Organization {
 	}
 	return orgs
 }
+
+func InsertTestOrgs(db *sql.DB, orgs []*models.Organization) error {
+	valueStrings := make([]string, 0, len(orgs))
+	valueArgs := make([]interface{}, 0, len(orgs)*2)
+	for i, org := range orgs {
+		valueStrings = append(valueStrings, fmt.Sprintf("($%d, $%d)", i*2+1, i*2+2))
+
+		valueArgs = append(valueArgs, org.Name)
+		valueArgs = append(valueArgs, org.OwnerID)
+	}
+	smt := `INSERT INTO organizations(name, owner_id) VALUES %s`
+	smt = fmt.Sprintf(smt, strings.Join(valueStrings, ","))
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	_, err = tx.Exec(smt, valueArgs...)
+	if err != nil {
+		_ = tx.Rollback()
+		return err
+	}
+	return tx.Commit()
+}

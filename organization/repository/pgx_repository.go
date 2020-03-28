@@ -10,6 +10,7 @@ import (
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/stdlib"
 	"log"
+	"strings"
 	"time"
 )
 
@@ -37,6 +38,21 @@ func (repo *pgxRepository) Save(ctx context.Context, org *models.Organization) e
 		return errorx.ErrInternalServer
 	}
 	return nil
+}
+
+func (repo *pgxRepository) FindByID(ctx context.Context, id int) (*models.Organization, error) {
+	var org models.Organization
+	err := repo.conn.QueryRow(ctx, "SELECT id, name, owner_id, created_at, updated_at "+
+		"FROM organizations WHERE id = $1 "+
+		"AND deleted_at IS NULL", id).
+		Scan(&org.ID, &org.Name, &org.OwnerID, &org.CreatedAt, &org.UpdatedAt)
+	if err != nil {
+		if strings.Contains(err.Error(), "no rows in result set") {
+			return nil, errorx.ErrorNotFound
+		}
+		return nil, err
+	}
+	return &org, nil
 }
 
 var _ organization.Repository = (*pgxRepository)(nil)

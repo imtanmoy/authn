@@ -12,6 +12,10 @@ type useCase struct {
 	contextTimeout time.Duration
 }
 
+func (u *useCase) FindByID(ctx context.Context, id int) (*models.Organization, error) {
+	return u.repo.FindByID(ctx, id)
+}
+
 func (u *useCase) Save(ctx context.Context, org *models.Organization) error {
 	return u.repo.Save(ctx, org)
 }

@@ -16,6 +16,7 @@ require (
 	github.com/lib/pq v1.3.0 // indirect
 	github.com/mustafaturan/bus v1.0.2
 	github.com/mustafaturan/monoton v1.0.0
+	github.com/oceanicdev/chi-param v1.1.0
 	github.com/ory/graceful v0.1.1
 	github.com/pelletier/go-toml v1.6.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect

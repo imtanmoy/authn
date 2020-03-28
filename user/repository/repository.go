@@ -13,6 +13,7 @@ import (
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/stdlib"
 	"log"
+	"strings"
 	"time"
 )
 
@@ -93,6 +94,9 @@ func (repo *repository) FindByID(ctx context.Context, id int) (*models.User, err
 		"AND deleted_at IS NULL", id).
 		Scan(&u.ID, &u.Name, &u.Email, &u.CreatedAt, &u.UpdatedAt)
 	if err != nil {
+		if strings.Contains(err.Error(), "no rows in result set") {
+			return nil, errorx.ErrorNotFound
+		}
 		return nil, err
 	}
 	return &u, nil
@@ -105,6 +109,9 @@ func (repo *repository) FindByEmail(ctx context.Context, email string) (*models.
 		"AND deleted_at IS NULL", email).
 		Scan(&u.ID, &u.Name, &u.Email, &u.Password, &u.CreatedAt, &u.UpdatedAt)
 	if err != nil {
+		if strings.Contains(err.Error(), "no rows in result set") {
+			return nil, errorx.ErrorNotFound
+		}
 		return nil, err
 	}
 	return &u, err

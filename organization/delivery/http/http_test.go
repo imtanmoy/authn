@@ -15,6 +15,7 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 	"time"
 )
@@ -104,4 +105,64 @@ func TestOrgHandler_Create(t *testing.T) {
 		body := w.Body.Bytes()
 		assert.Contains(t, string(body), "invalid request")
 	})
+}
+
+func TestOrgHandler_Get(t *testing.T) {
+	tests.TruncateTestDB(db)
+	defer tests.TruncateTestDB(db)
+
+	t.Parallel()
+
+	ts := httptest.NewServer(r)
+	defer ts.Close()
+
+	tests.SeedUser(db)
+
+	token, err := aux.GenerateToken("test@test.com")
+	if err != nil {
+		panic(err)
+	}
+
+	orgs := tests.FakeOrgs(10)
+
+	err = tests.InsertTestOrgs(db, orgs)
+	if err != nil {
+		panic(err)
+	}
+
+	data := []struct {
+		id     int
+		result bool
+	}{
+		{id: 12, result: false},
+		{id: 11, result: false},
+	}
+	for i, _ := range orgs {
+		data = append(data, struct {
+			id     int
+			result bool
+		}{id: i + 1, result: true})
+	}
+
+	for _, d := range data {
+		t.Run("Org -> "+strconv.Itoa(d.id)+"->GET", func(t *testing.T) {
+			req, _ := http.NewRequest("GET", ts.URL+"/organizations/"+strconv.Itoa(d.id), nil)
+
+			req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+
+			w := httptest.NewRecorder()
+			r.ServeHTTP(w, req)
+			body := w.Body.Bytes()
+			if d.result {
+				var got *orgResponse
+				assert.Equal(t, http.StatusOK, w.Code)
+				err = json.Unmarshal(body, &got)
+				assert.Nil(t, err)
+				assert.Equal(t, d.id, got.ID)
+			} else {
+				assert.Equal(t, http.StatusNotFound, w.Code)
+				assert.Contains(t, string(body), "organization not found")
+			}
+		})
+	}
 }

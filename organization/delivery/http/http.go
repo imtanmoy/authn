@@ -7,13 +7,21 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/imtanmoy/authn/events"
 	"github.com/imtanmoy/authn/internal/authx"
+	"github.com/imtanmoy/authn/internal/errorx"
 	"github.com/imtanmoy/authn/models"
 	"github.com/imtanmoy/authn/organization"
 	"github.com/imtanmoy/httpx"
+	param "github.com/oceanicdev/chi-param"
 	"gopkg.in/thedevsaddam/govalidator.v1"
 	"net/http"
 	"net/url"
 	"time"
+)
+
+type contextKey string
+
+const (
+	orgKey contextKey = "organization"
 )
 
 type orgCreatePayload struct {
@@ -47,6 +55,31 @@ type orgHandler struct {
 	useCase organization.UseCase
 	*authx.Authx
 	event events.EventEmitter
+}
+
+func (handler *orgHandler) OrgCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		if ctx == nil {
+			ctx = context.Background()
+		}
+		id, err := param.Int(r, "id")
+		if err != nil {
+			httpx.ResponseJSONError(w, r, http.StatusBadRequest, "invalid request parameter", err)
+			return
+		}
+		org, err := handler.useCase.FindByID(ctx, id)
+		if err != nil {
+			if errors.Is(err, errorx.ErrorNotFound) {
+				httpx.ResponseJSONError(w, r, http.StatusNotFound, "organization not found", err)
+			} else {
+				panic(err)
+			}
+			return
+		}
+		ctx = context.WithValue(r.Context(), orgKey, org)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
 }
 
 func (handler *orgHandler) Create(w http.ResponseWriter, r *http.Request) {
@@ -96,6 +129,23 @@ func (handler *orgHandler) Create(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
+func (handler *orgHandler) Get(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	org, ok := ctx.Value(orgKey).(*models.Organization)
+	if !ok {
+		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, httpx.ErrInternalServerError)
+		return
+	}
+	httpx.ResponseJSON(w, http.StatusOK, &orgResponse{
+		ID:        org.ID,
+		Name:      org.Name,
+		OwnerId:   org.OwnerID,
+		CreatedAt: org.CreatedAt,
+		UpdatedAt: org.UpdatedAt,
+	})
+	return
+}
+
 // NewHandler will initialize the org's resources endpoint
 func NewHandler(
 	r *chi.Mux,
@@ -112,6 +162,12 @@ func NewHandler(
 		r.Group(func(r chi.Router) {
 			r.Use(handler.AuthMiddleware)
 			r.Post("/", handler.Create)
+			r.Group(func(r chi.Router) {
+				r.Use(handler.OrgCtx)
+				r.Get("/{id}", handler.Get)
+				//				r.Put("/{id}", handler.Update)
+				//				r.Delete("/{id}", handler.Delete)
+			})
 		})
 	})
 }

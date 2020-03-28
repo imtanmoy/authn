@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"github.com/imtanmoy/authn/internal/errorx"
 	"github.com/imtanmoy/authn/tests"
 	"github.com/imtanmoy/authn/user"
 	"github.com/stretchr/testify/assert"
@@ -135,7 +136,7 @@ func TestRepository_FindByID(t *testing.T) {
 		if d.result == false {
 			assert.Error(t, err)
 			assert.Nil(t, got)
-			assert.Equal(t, err.Error(), "no rows in result set")
+			assert.Equal(t, err, errorx.ErrorNotFound)
 		} else {
 			assert.Nil(t, err)
 			assert.NotNil(t, got)
@@ -170,7 +171,7 @@ func TestRepository_FindByEmail(t *testing.T) {
 		got, err := repo.FindByEmail(ctx, d.email)
 		if d.result == false {
 			assert.Error(t, err)
-			assert.Equal(t, err.Error(), "no rows in result set")
+			assert.Equal(t, err, errorx.ErrorNotFound)
 			assert.Nil(t, got)
 		} else {
 			assert.Nil(t, err)
@@ -206,7 +207,7 @@ func TestRepository_GetByEmail(t *testing.T) {
 		got, err := repo.GetByEmail(ctx, d.email)
 		if d.result == false {
 			assert.Error(t, err)
-			assert.Equal(t, err.Error(), "no rows in result set")
+			assert.Equal(t, err, errorx.ErrorNotFound)
 			assert.Nil(t, got)
 		} else {
 			assert.Nil(t, err)

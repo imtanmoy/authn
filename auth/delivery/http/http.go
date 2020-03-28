@@ -125,7 +125,7 @@ func (handler *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		if errors.Is(err, errorx.ErrorNotFound) {
 			httpx.ResponseJSONError(w, r, http.StatusBadRequest, "invalid credentials", err)
 		} else {
-			httpx.ResponseJSONError(w, r, http.StatusInternalServerError, err)
+			panic(err)
 		}
 		return
 	}
@@ -136,8 +136,7 @@ func (handler *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	token, err := handler.GenerateToken(u.Email)
 	if err != nil {
-		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, err)
-		return
+		panic(err)
 	}
 	res := &loginResponse{Token: token}
 	httpx.ResponseJSON(w, http.StatusOK, res)
