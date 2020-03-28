@@ -19,7 +19,7 @@ func init() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	repo = NewRepository(db)
+	repo = NewPgxRepository(db)
 }
 
 func TestRepository_Save(t *testing.T) {

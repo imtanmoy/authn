@@ -37,7 +37,7 @@ func init() {
 func setup() {
 	timeoutContext := 30 * time.Millisecond * time.Second
 	userRepo := _userRepo.NewRepository(db)
-	orgRepo := _orgRepo.NewRepository(db)
+	orgRepo := _orgRepo.NewPgxRepository(db)
 
 	authxConfig := authx.AuthxConfig{
 		SecretKey:             "test",

@@ -26,7 +26,7 @@ func Test_Save(t *testing.T) {
 		Name:    "Test Orgs",
 		OwnerID: 1,
 	}
-	repo.On("Save", mock.Anything, mock.Anything).Return(nil).Once()
+	repo.On("Save", mock.Anything, org).Return(nil).Once()
 	err := repo.Save(c, org)
 	assert.Nil(t, err)
 	repo.AssertExpectations(t)

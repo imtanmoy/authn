@@ -23,7 +23,7 @@ func RegisterHandler(r *chi.Mux, rg registry.Registry) {
 
 	timeoutContext := 30 * time.Millisecond * time.Second //TODO it will come from config
 
-	orgRepo := _orgRepo.NewRepository(rg.DB())
+	orgRepo := _orgRepo.NewPgxRepository(rg.DB())
 	userRepo := _userRepo.NewRepository(rg.DB())
 	//inviteRepo := _inviteRepo.NewRepository(rg.DB())
 

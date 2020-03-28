@@ -13,11 +13,11 @@ import (
 	"time"
 )
 
-type repository struct {
+type pgxRepository struct {
 	conn *pgx.Conn
 }
 
-func (repo *repository) Save(ctx context.Context, org *models.Organization) error {
+func (repo *pgxRepository) Save(ctx context.Context, org *models.Organization) error {
 	lastInsertedID := 0
 	var createdAt time.Time
 	var updatedAt time.Time
@@ -39,13 +39,13 @@ func (repo *repository) Save(ctx context.Context, org *models.Organization) erro
 	return nil
 }
 
-var _ organization.Repository = (*repository)(nil)
+var _ organization.Repository = (*pgxRepository)(nil)
 
 // NewRepository will create an object that represent the organization.Repository interface
-func NewRepository(db *sql.DB) organization.Repository {
+func NewPgxRepository(db *sql.DB) organization.Repository {
 	conn, err := stdlib.AcquireConn(db)
 	if err != nil {
 		log.Fatal(err)
 	}
-	return &repository{conn: conn}
+	return &pgxRepository{conn: conn}
 }
