@@ -11,6 +11,8 @@ import (
 	"github.com/imtanmoy/authn/tests"
 	_userRepo "github.com/imtanmoy/authn/user/repository"
 	_userUseCase "github.com/imtanmoy/authn/user/usecase"
+	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4/stdlib"
 	"github.com/stretchr/testify/assert"
 	"log"
 	"net/http"
@@ -21,9 +23,10 @@ import (
 )
 
 var (
-	r   = chi.NewRouter()
-	db  *sql.DB
-	aux *authx.Authx
+	r    = chi.NewRouter()
+	db   *sql.DB
+	conn *pgx.Conn
+	aux  *authx.Authx
 )
 
 func init() {
@@ -32,12 +35,16 @@ func init() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	conn, err = stdlib.AcquireConn(db)
+	if err != nil {
+		log.Fatal(err)
+	}
 	setup()
 }
 
 func setup() {
 	timeoutContext := 30 * time.Millisecond * time.Second
-	userRepo := _userRepo.NewRepository(db)
+	userRepo := _userRepo.NewPgxRepository(conn)
 
 	authxConfig := authx.AuthxConfig{
 		SecretKey:             "test",

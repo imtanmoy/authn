@@ -6,12 +6,16 @@ import (
 	"github.com/imtanmoy/authn/internal/errorx"
 	"github.com/imtanmoy/authn/organization"
 	"github.com/imtanmoy/authn/tests"
+	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4/stdlib"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"log"
 	"testing"
 )
 
 var db *sql.DB
+var conn *pgx.Conn
 var repo organization.Repository
 
 func init() {
@@ -20,7 +24,11 @@ func init() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	repo = NewPgxRepository(db)
+	conn, err = stdlib.AcquireConn(db)
+	if err != nil {
+		log.Fatal(err)
+	}
+	repo = NewPgxRepository(conn)
 }
 
 func TestRepository_Save(t *testing.T) {
@@ -57,9 +65,7 @@ func TestPgxRepository_FindByID(t *testing.T) {
 	orgs := tests.FakeOrgs(10)
 
 	err := tests.InsertTestOrgs(db, orgs)
-	if err != nil {
-		panic(err)
-	}
+	require.NoError(t, err)
 
 	data := []struct {
 		id     int

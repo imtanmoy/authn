@@ -11,7 +11,10 @@ import (
 	_orgUseCase "github.com/imtanmoy/authn/organization/usecase"
 	"github.com/imtanmoy/authn/tests"
 	_userRepo "github.com/imtanmoy/authn/user/repository"
+	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4/stdlib"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -21,9 +24,10 @@ import (
 )
 
 var (
-	r   = chi.NewRouter()
-	db  *sql.DB
-	aux *authx.Authx
+	r    = chi.NewRouter()
+	db   *sql.DB
+	conn *pgx.Conn
+	aux  *authx.Authx
 )
 
 func init() {
@@ -32,13 +36,17 @@ func init() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	conn, err = stdlib.AcquireConn(db)
+	if err != nil {
+		log.Fatal(err)
+	}
 	setup()
 }
 
 func setup() {
 	timeoutContext := 30 * time.Millisecond * time.Second
-	userRepo := _userRepo.NewRepository(db)
-	orgRepo := _orgRepo.NewPgxRepository(db)
+	userRepo := _userRepo.NewPgxRepository(conn)
+	orgRepo := _orgRepo.NewPgxRepository(conn)
 
 	authxConfig := authx.AuthxConfig{
 		SecretKey:             "test",
@@ -62,9 +70,7 @@ func TestOrgHandler_Create(t *testing.T) {
 	tests.SeedUser(db)
 
 	token, err := aux.GenerateToken("test@test.com")
-	if err != nil {
-		panic(err)
-	}
+	require.NoError(t, err)
 
 	t.Run("Organization Create success", func(t *testing.T) {
 		// POST register
@@ -119,16 +125,12 @@ func TestOrgHandler_Get(t *testing.T) {
 	tests.SeedUser(db)
 
 	token, err := aux.GenerateToken("test@test.com")
-	if err != nil {
-		panic(err)
-	}
+	require.NoError(t, err)
 
 	orgs := tests.FakeOrgs(10)
 
 	err = tests.InsertTestOrgs(db, orgs)
-	if err != nil {
-		panic(err)
-	}
+	require.NoError(t, err)
 
 	data := []struct {
 		id     int

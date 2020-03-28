@@ -11,6 +11,8 @@ import (
 	"github.com/imtanmoy/authn/registry"
 	_userRepo "github.com/imtanmoy/authn/user/repository"
 	_userUseCase "github.com/imtanmoy/authn/user/usecase"
+	"github.com/jackc/pgx/v4/stdlib"
+	"log"
 	"time"
 
 	"github.com/go-chi/chi"
@@ -23,8 +25,13 @@ func RegisterHandler(r *chi.Mux, rg registry.Registry) {
 
 	timeoutContext := 30 * time.Millisecond * time.Second //TODO it will come from config
 
-	orgRepo := _orgRepo.NewPgxRepository(rg.DB())
-	userRepo := _userRepo.NewRepository(rg.DB())
+	conn, err := stdlib.AcquireConn(rg.DB())
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	orgRepo := _orgRepo.NewPgxRepository(conn)
+	userRepo := _userRepo.NewPgxRepository(conn)
 	//inviteRepo := _inviteRepo.NewRepository(rg.DB())
 
 	authxConfig := authx.AuthxConfig{

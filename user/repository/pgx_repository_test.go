@@ -6,6 +6,7 @@ import (
 	"github.com/imtanmoy/authn/internal/errorx"
 	"github.com/imtanmoy/authn/tests"
 	"github.com/imtanmoy/authn/user"
+	"github.com/jackc/pgx/v4/stdlib"
 	"github.com/stretchr/testify/assert"
 	"log"
 	"testing"
@@ -20,7 +21,11 @@ func init() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	repo = NewRepository(db)
+	conn, err := stdlib.AcquireConn(db)
+	if err != nil {
+		log.Fatal(err)
+	}
+	repo = NewPgxRepository(conn)
 }
 
 func TestRepository_FindAll(t *testing.T) {

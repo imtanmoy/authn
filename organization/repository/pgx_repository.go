@@ -2,14 +2,11 @@ package repository
 
 import (
 	"context"
-	"database/sql"
 	"github.com/imtanmoy/authn/internal/errorx"
 	"github.com/imtanmoy/authn/models"
 	"github.com/imtanmoy/authn/organization"
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4"
-	"github.com/jackc/pgx/v4/stdlib"
-	"log"
 	"strings"
 	"time"
 )
@@ -58,10 +55,6 @@ func (repo *pgxRepository) FindByID(ctx context.Context, id int) (*models.Organi
 var _ organization.Repository = (*pgxRepository)(nil)
 
 // NewRepository will create an object that represent the organization.Repository interface
-func NewPgxRepository(db *sql.DB) organization.Repository {
-	conn, err := stdlib.AcquireConn(db)
-	if err != nil {
-		log.Fatal(err)
-	}
+func NewPgxRepository(conn *pgx.Conn) organization.Repository {
 	return &pgxRepository{conn: conn}
 }
