@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/go-chi/chi"
+	"github.com/imtanmoy/authn/events"
 	"github.com/imtanmoy/authn/internal/authx"
 	"github.com/imtanmoy/authn/internal/errorx"
 	"github.com/imtanmoy/authn/models"
@@ -14,6 +15,7 @@ import (
 	"gopkg.in/thedevsaddam/govalidator.v1"
 	"net/http"
 	"net/url"
+	"time"
 )
 
 type contextKey string
@@ -22,16 +24,16 @@ const (
 	orgKey contextKey = "organization"
 )
 
-type organizationPayload struct {
+type orgCreatePayload struct {
 	Name string `json:"name"`
 }
 
-func (o *organizationPayload) validate() url.Values {
+func (rp *orgCreatePayload) validate() url.Values {
 	rules := govalidator.MapData{
 		"name": []string{"required", "min:4", "max:100"},
 	}
 	opts := govalidator.Options{
-		Data:  o,
+		Data:  rp,
 		Rules: rules,
 	}
 
@@ -40,94 +42,39 @@ func (o *organizationPayload) validate() url.Values {
 	return e
 }
 
-type OrganizationResponse struct {
-	ID   int    `json:"id"`
-	Name string `json:"name"`
+type orgResponse struct {
+	ID        int       `json:"id"`
+	Name      string    `json:"name"`
+	OwnerId   int       `json:"owner_id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
-func NewOrganizationResponse(organization *models.Organization) *OrganizationResponse {
-	resp := &OrganizationResponse{
-		ID:   organization.ID,
-		Name: organization.Name,
-	}
-	return resp
-}
-
-func NewOrganizationListResponse(organizations []*models.Organization) []*OrganizationResponse {
-	var list []*OrganizationResponse
-	if len(organizations) == 0 {
-		list = make([]*OrganizationResponse, 0)
-	}
-	for _, org := range organizations {
-		list = append(list, NewOrganizationResponse(org))
-	}
-	return list
-}
-
-// OrganizationHandler  represent the http handler for organization
-type OrganizationHandler struct {
+// orgHandler  represent the http handler for org
+type orgHandler struct {
 	useCase organization.UseCase
 	*authx.Authx
+	event events.EventEmitter
 }
 
-// NewHandler will initialize the organization's resources endpoint
-func NewHandler(r *chi.Mux, useCase organization.UseCase, aux *authx.Authx) {
-	handler := &OrganizationHandler{
-		useCase: useCase,
-		Authx:   aux,
-	}
-	r.Route("/organizations", func(r chi.Router) {
-		r.Group(func(r chi.Router) {
-			r.Use(handler.AuthMiddleware)
-			r.Post("/", handler.Create)
-			r.Get("/", handler.List)
-			r.Group(func(r chi.Router) {
-				r.Route("/{id}", func(r chi.Router) {
-					r.Use(handler.OrganizationCtx)
-					r.Get("/", handler.Get)
-					r.Put("/", handler.Update)
-					r.Delete("/", handler.Delete)
-				})
-			})
-		})
-	})
-}
-
-func (handler *OrganizationHandler) OrganizationCtx(next http.Handler) http.Handler {
+func (handler *orgHandler) OrgCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		if ctx == nil {
-			httpx.ResponseJSONError(w, r, http.StatusInternalServerError, httpx.ErrInternalServerError)
-			return
+			ctx = context.Background()
 		}
 		id, err := param.Int(r, "id")
 		if err != nil {
-			httpx.ResponseJSONError(w, r, http.StatusBadRequest, "Invalid request parameter", err)
+			httpx.ResponseJSONError(w, r, http.StatusBadRequest, "invalid request parameter", err)
 			return
 		}
-		org, err := handler.useCase.GetById(ctx, id)
+		org, err := handler.useCase.FindByID(ctx, id)
 		if err != nil {
 			if errors.Is(err, errorx.ErrorNotFound) {
 				httpx.ResponseJSONError(w, r, http.StatusNotFound, "organization not found", err)
 			} else {
-				httpx.ResponseJSONError(w, r, http.StatusInternalServerError, err)
+				panic(err)
 			}
-			return
-		}
-		u, err := handler.GetCurrentUser(r)
-		currentUser, ok := u.(*models.User)
-		if err != nil || !ok {
-			panic(fmt.Sprintf("could not upgrade user to an authable user, type: %T", u))
-		}
-		found := false
-		for _, b := range currentUser.Organizations {
-			if b.ID == org.ID {
-				found = true
-				break
-			}
-		}
-		if !found {
-			httpx.ResponseJSONError(w, r, http.StatusBadRequest, "organization not found")
 			return
 		}
 		ctx = context.WithValue(r.Context(), orgKey, org)
@@ -135,115 +82,92 @@ func (handler *OrganizationHandler) OrganizationCtx(next http.Handler) http.Hand
 	})
 }
 
-func (handler *OrganizationHandler) List(w http.ResponseWriter, r *http.Request) {
+func (handler *orgHandler) Create(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	if ctx == nil {
 		ctx = context.Background()
 	}
-	u, err := handler.GetCurrentUser(r)
-	currentUser, ok := u.(*models.User)
-	if err != nil || !ok {
-		panic(fmt.Sprintf("could not upgrade user to an authable user, type: %T", u))
-	}
-	organizations, err := handler.useCase.FindAllByUserId(ctx, currentUser.ID)
-	if err != nil {
-		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, err)
-		return
-	}
-
-	httpx.ResponseJSON(w, http.StatusOK, NewOrganizationListResponse(organizations))
-	return
-}
-
-func (handler *OrganizationHandler) Create(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	if ctx == nil {
-		ctx = context.Background()
-	}
-	u, err := handler.GetCurrentUser(r)
-	currentUser, ok := u.(*models.User)
-	if err != nil || !ok {
-		panic(fmt.Sprintf("could not upgrade user to an authable user, type: %T", u))
-	}
-	data := &organizationPayload{}
+	data := &orgCreatePayload{}
 	if err := httpx.DecodeJSON(r, data); err != nil {
 		var mr *httpx.MalformedRequest
 		if errors.As(err, &mr) {
 			httpx.ResponseJSONError(w, r, mr.Status, mr.Status, mr.Msg)
-		} else {
-			httpx.ResponseJSONError(w, r, http.StatusInternalServerError, err)
+			return
 		}
-		return
+		panic(err)
 	}
 
 	validationErrors := data.validate()
 
 	if len(validationErrors) > 0 {
-		httpx.ResponseJSONError(w, r, 400, "Invalid Request", validationErrors)
+		httpx.ResponseJSONError(w, r, 400, "invalid request", validationErrors)
 		return
+	}
+
+	u, err := handler.GetCurrentUser(r)
+	us, ok := u.(*models.User)
+	if err != nil || !ok {
+		panic(fmt.Sprintf("could not upgrade user to an authable user, type: %T", u))
 	}
 
 	var org models.Organization
 	org.Name = data.Name
-
-	err = handler.useCase.Store(ctx, &org, currentUser)
+	org.OwnerID = us.ID
+	err = handler.useCase.Save(ctx, &org)
 	if err != nil {
 		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, err)
 		return
 	}
-	httpx.ResponseJSON(w, http.StatusCreated, NewOrganizationResponse(&org))
+
+	httpx.ResponseJSON(w, http.StatusCreated, &orgResponse{
+		ID:        org.ID,
+		Name:      org.Name,
+		OwnerId:   org.OwnerID,
+		CreatedAt: org.CreatedAt,
+		UpdatedAt: org.UpdatedAt,
+	})
 	return
 }
 
-func (handler *OrganizationHandler) Get(w http.ResponseWriter, r *http.Request) {
+func (handler *orgHandler) Get(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	org, ok := ctx.Value(orgKey).(*models.Organization)
 	if !ok {
-		panic(fmt.Sprintf("could not get organization, type: %T", org))
+		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, httpx.ErrInternalServerError)
+		return
 	}
-	httpx.ResponseJSON(w, http.StatusOK, NewOrganizationResponse(org))
+	httpx.ResponseJSON(w, http.StatusOK, &orgResponse{
+		ID:        org.ID,
+		Name:      org.Name,
+		OwnerId:   org.OwnerID,
+		CreatedAt: org.CreatedAt,
+		UpdatedAt: org.UpdatedAt,
+	})
 	return
 }
 
-func (handler *OrganizationHandler) Update(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	org, ok := ctx.Value(orgKey).(*models.Organization)
-	if !ok {
-		panic(fmt.Sprintf("could not get organization, type: %T", org))
+// NewHandler will initialize the org's resources endpoint
+func NewHandler(
+	r *chi.Mux,
+	aux *authx.Authx,
+	useCase organization.UseCase,
+	event events.EventEmitter,
+) {
+	handler := &orgHandler{
+		useCase: useCase,
+		Authx:   aux,
+		event:   event,
 	}
-	data := &organizationPayload{}
-	if err := httpx.DecodeJSON(r, data); err != nil {
-		httpx.ResponseJSONError(w, r, http.StatusBadRequest, err)
-		return
-	}
-
-	validationErrors := data.validate()
-
-	if len(validationErrors) > 0 {
-		httpx.ResponseJSONError(w, r, http.StatusBadRequest, "Invalid Request", validationErrors)
-		return
-	}
-	// update organization's data
-	org.Name = data.Name
-	err := handler.useCase.Update(ctx, org)
-	if err != nil {
-		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, err)
-		return
-	}
-	httpx.ResponseJSON(w, http.StatusOK, NewOrganizationResponse(org))
-	return
-}
-
-func (handler *OrganizationHandler) Delete(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	org, ok := ctx.Value(orgKey).(*models.Organization)
-	if !ok {
-		panic(fmt.Sprintf("could not get organization, type: %T", org))
-	}
-	err := handler.useCase.Delete(ctx, org)
-	if err != nil {
-		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, err)
-		return
-	}
-	httpx.NoContent(w)
+	r.Route("/organizations", func(r chi.Router) {
+		r.Group(func(r chi.Router) {
+			r.Use(handler.AuthMiddleware)
+			r.Post("/", handler.Create)
+			r.Group(func(r chi.Router) {
+				r.Use(handler.OrgCtx)
+				r.Get("/{id}", handler.Get)
+				//				r.Put("/{id}", handler.Update)
+				//				r.Delete("/{id}", handler.Delete)
+			})
+		})
+	})
 }

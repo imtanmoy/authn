@@ -2,7 +2,7 @@ package config
 
 import (
 	"fmt"
-	"log"
+	"github.com/imtanmoy/logx"
 	"strings"
 
 	"github.com/spf13/viper"
@@ -10,20 +10,20 @@ import (
 
 // Config contains env variables
 type Config struct {
-	ENVIRONMENT              string `mapstructure:"environment"`
-	DEBUG                    bool   `mapstructure:"debug"`
-	JWT_SECRET_KEY           string `mapstructure:"jwt_secret_key"`
-	JWT_ACCESS_TOKEN_EXPIRES int    `mapstructure:"jwt_access_token_expires"`
-	SERVER                   server
-	DB                       db
+	ENVIRONMENT           string `mapstructure:"environment"`
+	DEBUG                 bool   `mapstructure:"debug"`
+	JwtSecretKey          string `mapstructure:"jwt_secret_key"`
+	JwtAccessTokenExpires int    `mapstructure:"jwt_access_token_expires"`
+	SERVER                Server
+	DB                    DB
 }
 
-type server struct {
+type Server struct {
 	HOST string `mapstructure:"host"`
 	PORT int    `mapstructure:"port"`
 }
 
-type db struct {
+type DB struct {
 	HOST     string `mapstructure:"host"`
 	PORT     int    `mapstructure:"port"`
 	USERNAME string `mapstructure:"username"`
@@ -36,13 +36,17 @@ var Conf Config
 
 // InitConfig initialze the Conf
 func InitConfig() {
-	config := initViper()
+	config, err := initViper("./")
+	if err != nil {
+		logx.Fatal(err)
+		return
+	}
 	Conf = *config
 }
 
-func initViper() *Config {
+func initViper(configPath string) (*Config, error) {
 	viper.SetConfigName("config")
-	viper.AddConfigPath(".")
+	viper.AddConfigPath(configPath)
 
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	viper.AutomaticEnv()
@@ -50,13 +54,13 @@ func initViper() *Config {
 	viper.SetConfigType("yml")
 	err := viper.ReadInConfig()
 	if err != nil {
-		fmt.Printf("Error reading config file, %s", err)
+		return nil, fmt.Errorf("error reading config file, %s", err)
 	}
 
 	var config Config
 	err = viper.Unmarshal(&config)
 	if err != nil {
-		log.Panicf("Unable to decode into struct, %v", err)
+		return nil, fmt.Errorf("unable to decode into struct, %v", err)
 	}
-	return &config
+	return &config, nil
 }

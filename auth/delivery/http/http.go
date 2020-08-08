@@ -4,16 +4,18 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/imtanmoy/authn/internal/errorx"
+	"net/http"
+	"net/url"
+
 	"github.com/go-chi/chi"
 	"github.com/imtanmoy/authn/auth"
+	"github.com/imtanmoy/authn/events"
 	"github.com/imtanmoy/authn/internal/authx"
-	"github.com/imtanmoy/authn/internal/errorx"
 	"github.com/imtanmoy/authn/models"
 	"github.com/imtanmoy/authn/user"
 	"github.com/imtanmoy/httpx"
 	"gopkg.in/thedevsaddam/govalidator.v1"
-	"net/http"
-	"net/url"
 )
 
 type loginPayload struct {
@@ -81,13 +83,19 @@ func NewUserResponse(u *models.User) *UserResponse {
 	return resp
 }
 
+type loginResponse struct {
+	Token string `json:"token"`
+}
+
 // AuthHandler  represent the http handler for auth
 type AuthHandler struct {
 	useCase     auth.UseCase
 	userUseCase user.UseCase
 	*authx.Authx
+	event events.EventEmitter
 }
 
+// Login Handler
 func (handler *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	if ctx == nil {
@@ -117,7 +125,7 @@ func (handler *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		if errors.Is(err, errorx.ErrorNotFound) {
 			httpx.ResponseJSONError(w, r, http.StatusBadRequest, "invalid credentials", err)
 		} else {
-			httpx.ResponseJSONError(w, r, http.StatusInternalServerError, err)
+			panic(err)
 		}
 		return
 	}
@@ -128,20 +136,20 @@ func (handler *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	token, err := handler.GenerateToken(u.Email)
 	if err != nil {
-		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, err)
-		return
+		panic(err)
 	}
-	httpx.ResponseJSON(w, http.StatusCreated, struct {
-		Token string `json:"token"`
-	}{Token: token})
+	res := &loginResponse{Token: token}
+	httpx.ResponseJSON(w, http.StatusOK, res)
 	return
 }
 
+// Logout Handler
 func (handler *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	//TODO need to work on meaning full logout
 	httpx.NoContent(w)
 }
 
+// GetMe handler
 func (handler *AuthHandler) GetMe(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	if ctx == nil {
@@ -156,6 +164,7 @@ func (handler *AuthHandler) GetMe(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
+// Register handler
 func (handler *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	if ctx == nil {
@@ -166,10 +175,9 @@ func (handler *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		var mr *httpx.MalformedRequest
 		if errors.As(err, &mr) {
 			httpx.ResponseJSONError(w, r, mr.Status, mr.Status, mr.Msg)
-		} else {
-			httpx.ResponseJSONError(w, r, http.StatusInternalServerError, err)
+			return
 		}
-		return
+		panic(err)
 	}
 
 	validationErrors := data.validate()
@@ -193,21 +201,30 @@ func (handler *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	u.Email = data.Email
 	u.Password = hashedPassword
 
-	err = handler.userUseCase.Store(ctx, &u)
+	err = handler.userUseCase.Save(ctx, &u)
 	if err != nil {
 		httpx.ResponseJSONError(w, r, http.StatusInternalServerError, err)
 		return
 	}
+	handler.event.EmitWithDelay(ctx, events.UserCreateEvent, u)
+
 	httpx.ResponseJSON(w, http.StatusCreated, NewUserResponse(&u))
 	return
 }
 
 // NewHandler will initialize the user's resources endpoint
-func NewHandler(r *chi.Mux, useCase auth.UseCase, userUseCase user.UseCase, aux *authx.Authx) {
+func NewHandler(
+	r *chi.Mux,
+	aux *authx.Authx,
+	useCase auth.UseCase,
+	userUseCase user.UseCase,
+	event events.EventEmitter,
+) {
 	handler := &AuthHandler{
 		useCase:     useCase,
 		userUseCase: userUseCase,
 		Authx:       aux,
+		event:       event,
 	}
 	r.Route("/", func(r chi.Router) {
 		r.Post("/login", handler.Login)
